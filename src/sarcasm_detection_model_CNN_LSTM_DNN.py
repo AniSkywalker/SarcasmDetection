@@ -54,7 +54,7 @@ class sarcasm_model():
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2))
         model.add(Activation('softmax'))
-        adam = Adam(lr=0.0001)
+        adam = Adam(lr=0.001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
         return model
