@@ -100,8 +100,10 @@ class train_model(sarcasm_model):
 
         #word2vec dimension
         dimension_size = 300
-        W = dh.get_word2vec_weight(self._vocab, n=dimension_size)
-        print('Word2vec obtained....')
+        # W = dh.get_word2vec_weight(self._vocab, n=dimension_size)
+        # print('Word2vec obtained....')
+        W= None
+
 
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
