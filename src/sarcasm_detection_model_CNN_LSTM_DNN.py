@@ -15,7 +15,7 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras.utils import np_utils
 from collections import defaultdict
-import SarcasmDetection.src.data_processing.data_handler as dh
+import data_processing.data_handler as dh
 
 class sarcasm_model():
     _train_file = None

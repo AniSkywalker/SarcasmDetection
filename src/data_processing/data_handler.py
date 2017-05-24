@@ -3,7 +3,7 @@ import re
 from gensim.models.keyedvectors import KeyedVectors
 import numpy
 from nltk.tokenize import TweetTokenizer
-import SarcasmDetection.src.data_processing.glove2Word2vecLoader as glove
+import data_processing.glove2Word2vecLoader as glove
 
 
 
