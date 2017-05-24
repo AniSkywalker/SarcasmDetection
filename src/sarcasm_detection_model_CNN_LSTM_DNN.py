@@ -9,7 +9,7 @@ from keras.models import Sequential, model_from_json
 from keras.layers.core import Dropout, Dense, Activation
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
-from keras.layers.convolutional import Convolution1D
+from keras.layers.convolutional import Convolution1D, MaxPooling1D
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
@@ -42,12 +42,14 @@ class sarcasm_model():
                                  trainable=trainable))
 
         model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid', input_shape=(1, maxlen)))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid', input_shape=(1, maxlen-2)))
+        model.add(MaxPooling1D(pool_size=3))
+        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(MaxPooling1D(pool_size=3))
+
+        model.add(Dropout(0.25))
 
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', return_sequences=True))
-        model.add(Dropout(0.25))
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
-        model.add(Dropout(0.25))
 
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2))
