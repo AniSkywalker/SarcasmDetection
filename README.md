@@ -1,8 +1,8 @@
 
 To run the code:
 
-git@github.com:aniruddhaghosh/SarcasmDetection.git
-cd SarcasmDetection/src
+git clone git@github.com:AniSkywalker/SarcasmDetection.git
+cd SarcasmDetection/src/
 python sarcasm_detection_model_CNN_LSTM_DNN.py
 
 Sample of train, dev, and test files are added.
