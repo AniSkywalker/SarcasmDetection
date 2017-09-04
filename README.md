@@ -19,6 +19,7 @@ To run the model with context information and psychological dimensions,
 python sarcasm_context_moods.py
 
 Please cite the following paper
+
 <b>Magnets for Sarcasm: Making Sarcasm Detection Timely, Contextual and Very Personal</b>
 Aniruddha Ghosh and Tony Veale
 Conference on Empirical Methods in Natural Language Processing (EMNLP).
