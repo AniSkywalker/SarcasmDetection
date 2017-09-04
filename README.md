@@ -16,7 +16,8 @@ NAACL-HLT. 16th June 2016, San Diego, California, U.S.A.
 
 ===============================================================================================
 
-To run the model with context information and psychological dimensions, 
+To run the model with context information and psychological dimensions:
+
 python sarcasm_context_moods.py
 
 Please cite the following paper
