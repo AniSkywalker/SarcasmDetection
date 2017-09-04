@@ -14,7 +14,7 @@ Aniruddha Ghosh and Tony Veale.
 7th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis (WASSA 2016). 
 NAACL-HLT. 16th June 2016, San Diego, California, U.S.A. 
 
-=====================================================================================================
+===============================================================================================
 
 To run the model with context information and psychological dimensions, 
 python sarcasm_context_moods.py
