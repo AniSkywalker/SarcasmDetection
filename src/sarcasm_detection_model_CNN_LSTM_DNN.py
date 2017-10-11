@@ -15,7 +15,7 @@ from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras.utils import np_utils
 from collections import defaultdict
-import data_processing.data_handler as dh
+import SarcasmDetection.src.data_processing.data_handler as dh
 
 class sarcasm_model():
     _train_file = None
@@ -32,31 +32,33 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self,vocab_size, maxlen,emb_weights=None, hidden_units=256,trainable=False):
+    def _build_network(self, vocab_size, maxlen, embedding_dimension = 100, hidden_units=256,trainable=False):
         print('Build model...')
         model = Sequential()
-        if(emb_weights == None):
-            model.add(Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal'))
-        else:
-            model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
-                                 trainable=trainable))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid', input_shape=(1, maxlen)))
-        model.add(MaxPooling1D(pool_size=3))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        model.add(MaxPooling1D(pool_size=3))
+        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
-        model.add(Dropout(0.25))
+        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+                                input_shape=(1, maxlen)))
+        # model.add(MaxPooling1D(pool_size=3))
+        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+                                input_shape=(1, maxlen-2)))
+        # model.add(MaxPooling1D(pool_size=3))
 
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', return_sequences=True))
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
+        # model.add(Dropout(0.25))
+
+        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
+        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+
 
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2))
         model.add(Activation('softmax'))
-        adam = Adam(lr=0.001)
+        adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
+
+        print(model.summary())
         return model
 
 class train_model(sarcasm_model):
@@ -98,12 +100,8 @@ class train_model(sarcasm_model):
         tX, tY, tD, tC ,tA = dh.vectorize_word_dimension(self.validation, self._vocab)
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
 
-        #word2vec dimension
-        dimension_size = 300
-        # W = dh.get_word2vec_weight(self._vocab, n=dimension_size)
-        # print('Word2vec obtained....')
-        W= None
-
+        #embedding dimension
+        dimension_size = 256
 
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -118,15 +116,17 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W,trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
+        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+                                   save_best_only=False)
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
 
         # training
         model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best,early_stopping],class_weight=ratio)
+                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
 
     def load_train_validation_data(self):
@@ -209,11 +209,10 @@ class test_model(sarcasm_model):
 
 
     def __predict_model(self,tX, test):
-        #calculates output and writes to a file.
-        prediction_probability = self.model.predict_proba(tX, batch_size=1, verbose=1)
-
         y = []
         y_pred = []
+
+        prediction_probability = self.model.predict_proba(tX, batch_size=1, verbose=1)
 
         try:
             fd = open(self._output_file + '.analysis', 'w')
@@ -233,16 +232,19 @@ class test_model(sarcasm_model):
                 fd.write(str(label[0]) + '\t' + str(label[1]) + '\t'
                          + str(gold_label) + '\t'
                          + str(predicted) + '\t'
-                         + ' '.join(words) + '\t'
-                         + ' '.join(context))
+                         + ' '.join(words))
+
                 fd.write('\n')
 
+
+            print()
+
+            print('accuracy::', metrics.accuracy_score(y, y_pred))
             print('precision::', metrics.precision_score(y, y_pred, average='weighted'))
             print('recall::', metrics.recall_score(y, y_pred, average='weighted'))
             print('f_score::', metrics.f1_score(y, y_pred, average='weighted'))
-
+            print('f_score::', metrics.classification_report(y, y_pred))
             fd.close()
-
         except Exception as e:
             print(e)
 
@@ -251,17 +253,18 @@ class test_model(sarcasm_model):
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
     train_file = basepath + '/resource/train/Train_v1.txt'
-    validation_file = basepath + '/resource/test/Test_v1.txt'
-    test_file = basepath + '/resource/dev/Dev_v1.txt'
+    validation_file = basepath + '/resource/dev/Dev_v1.txt'
+    test_file = basepath + '/resource/test/Test_v1.txt'
     word_file_path = basepath + '/resource/word_list.txt'
 
     output_file = basepath + '/resource/text_model/TestResults.txt'
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
-    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, test_file, word_file_path, model_file, vocab_file_path, output_file)
 
     t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     t.load_trained_model()
     t.predict(test_file)
+
 

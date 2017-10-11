@@ -6,24 +6,32 @@ import sys
 sys.path.append('../../')
 
 from keras.layers.wrappers import TimeDistributed
-from keras import backend as K, regularizers
+from keras import backend as K, optimizers, regularizers
 
 import time
 import numpy
 from sklearn import metrics
-from keras.models import model_from_json
-from keras.layers.core import Dropout, Dense, Activation, Flatten
+from keras.models import Sequential, model_from_json
+from keras.layers.core import Dropout, Dense, Activation, Flatten, Reshape
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.convolutional import Convolution1D
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.layers import Bidirectional, Merge
+from keras.optimizers import Adam
 
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.utils import np_utils
+from sklearn.metrics import confusion_matrix
 from keras.layers import Input
-import SarcasmDetection.src.data_processing.data_handler as dh
+import matplotlib.pyplot as plt
+from pandas import DataFrame
+import sarcasm_detection_master.src.data_processing.data_handler as dh
 from collections import defaultdict
+import seaborn as sns
+from sarcasm_detection_master.src.Common_functions import generative_function as gf
+import pandas as pd
 
 
 class sarcasm_model():
@@ -251,7 +259,7 @@ class train_model(sarcasm_model):
         lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
                                      cooldown=0, min_lr=0.000001)
 
-        model.fit([C, X, D], Y, batch_size=batch_size, epochs=500, validation_data=([tC, tX, tD], tY), shuffle=True,
+        model.fit([C, X, D], Y, batch_size=batch_size, epochs=3, validation_data=([tC, tX, tD], tY), shuffle=True,
                   callbacks=[save_best,early_stopping, lr_tuner], class_weight=ratio)
 
 
