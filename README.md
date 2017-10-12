@@ -7,6 +7,8 @@ cd SarcasmDetection/src/
 
 python sarcasm_detection_model_CNN_LSTM_DNN.py
 
+You can file the trained model file /resource/text_model/weights/model.json.hdf5
+
 Please cite the following paper
 
 <b>Fracking Sarcasm using Neural Network.</b>

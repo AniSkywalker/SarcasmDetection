@@ -7,12 +7,8 @@ import SarcasmDetection.src.data_processing.glove2Word2vecLoader as glove
 
 
 
-def load_word2vec(lang = 'en'):
-    word2vecmodel = None
-    if(lang=='en'):
-        word2vecmodel = KeyedVectors.load_word2vec_format('/home/word2vec/GoogleNews-vectors-negative300.bin', binary=True)
-    if(lang=='de'):
-        word2vecmodel = KeyedVectors.load_word2vec_format('/home/word2vec/german_word2vec.bin', binary=True)
+def load_word2vec(path = None):
+    word2vecmodel = KeyedVectors.load_word2vec_format(path, binary=True)
 
     return word2vecmodel
 
@@ -227,8 +223,8 @@ def write_vocab(filepath,vocab):
         for key, value in vocab.items():
             fw.write(str(key) + '\t' + str(value) + '\n')
 
-def get_word2vec_weight(vocab,n=300,lang = 'en'):
-    word2vecmodel = load_word2vec(lang=lang)
+def get_word2vec_weight(vocab,n=300,path = None):
+    word2vecmodel = load_word2vec(path=path)
     emb_weights= numpy.zeros((len(vocab.keys())+1,n))
     for k,v in vocab.items():
         if(word2vecmodel.__contains__(k)):
