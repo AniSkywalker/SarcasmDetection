@@ -1,5 +1,5 @@
 
-To train the model:
+To train the model(using Theano):
 
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
 
@@ -24,7 +24,7 @@ NAACL-HLT. 16th June 2016, San Diego, California, U.S.A.
 
 ===============================================================================================
 
-To run the model with context information and psychological dimensions:
+To run the model with context information and psychological dimensions(Using Tensorflow):
 
 python sarcasm_context_moods.py
 
