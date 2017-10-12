@@ -1,5 +1,5 @@
 
-To run the code:
+To train the model:
 
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
 
