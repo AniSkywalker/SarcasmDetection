@@ -10,6 +10,11 @@ python sarcasm_detection_model_CNN_LSTM_DNN.py
 You can find the trained model file in the following link
 https://drive.google.com/drive/folders/0B7C_0ZfEBcpRbDZKelBZTFFsV0E?usp=sharing
 
+Download the trained model in /resource/text_model/weights/
+
+To run the trained model,
+run the testmodel
+
 Please cite the following paper
 
 <b>Fracking Sarcasm using Neural Network.</b>
