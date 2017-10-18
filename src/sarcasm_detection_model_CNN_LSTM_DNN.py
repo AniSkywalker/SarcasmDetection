@@ -262,7 +262,7 @@ if __name__ == "__main__":
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
-    tr=train_model(train_file, test_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
 
     t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     t.load_trained_model()
