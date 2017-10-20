@@ -4,6 +4,7 @@ sys.path.append('../../')
 import collections
 import time
 import numpy
+numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
 from keras.layers.core import Dropout, Dense, Activation
@@ -25,7 +26,6 @@ class sarcasm_model():
     _model_file = None
     _word_file_path = None
     _vocab_file_path = None
-    _input_weight_file_path = None
     _vocab = None
     _line_maxlen = None
 
@@ -68,7 +68,7 @@ class train_model(sarcasm_model):
     print("Loading resource...")
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 input_weight_file_path=None):
+                 word2vec_path=None):
 
         sarcasm_model.__init__(self)
 
@@ -78,7 +78,6 @@ class train_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
-        self._input_weight_file_path = input_weight_file_path
 
         self.load_train_validation_data()
 
@@ -103,7 +102,7 @@ class train_model(sarcasm_model):
 
         #embedding dimension
         W = dh.get_word2vec_weight(self._vocab, n=300,
-                                   path='/home/word2vec/GoogleNews-vectors-negative300.bin')
+                                   path=word2vec_path)
 
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -118,11 +117,11 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
 
         open(self._model_file + 'model_wv.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model_wv.json.hdf5', save_best_only=True)
-        save_all = ModelCheckpoint(self._model_file + 'weights_wv.{epoch:02d}-{val_loss:.2f}.hdf5',
+        save_all = ModelCheckpoint(self._model_file + 'weights_wv.{epoch:02d}.hdf5',
                                    save_best_only=False)
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
 
@@ -262,8 +261,9 @@ if __name__ == "__main__":
     output_file = basepath + '/resource/text_model/TestResults.txt'
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
+    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
-    # tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file, word2vec_path=word2vec_path)
 
     t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     t.load_trained_model()

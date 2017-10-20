@@ -2,36 +2,29 @@ import os
 import collections
 import random
 import sys
-
 sys.path.append('../../')
-
-from keras.layers.wrappers import TimeDistributed
-from keras import backend as K, optimizers, regularizers
 
 import time
 import numpy
+numpy.random.seed(1337)
+
+from keras.layers.wrappers import TimeDistributed
+from keras import backend as K, regularizers
 from sklearn import metrics
-from keras.models import Sequential, model_from_json
-from keras.layers.core import Dropout, Dense, Activation, Flatten, Reshape
+from keras.models import model_from_json
+from keras.layers.core import Dropout, Dense, Activation, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.convolutional import Convolution1D
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from keras.layers import Bidirectional, Merge
-from keras.optimizers import Adam
 
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.utils import np_utils
-from sklearn.metrics import confusion_matrix
 from keras.layers import Input
-import matplotlib.pyplot as plt
-from pandas import DataFrame
-import sarcasm_detection_master.src.data_processing.data_handler as dh
+import SarcasmDetection.src.data_processing.data_handler as dh
 from collections import defaultdict
-import seaborn as sns
-from sarcasm_detection_master.src.Common_functions import generative_function as gf
-import pandas as pd
+
 
 
 class sarcasm_model():
@@ -76,18 +69,18 @@ class sarcasm_model():
             c_emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[c_emb_weights],
                               trainable=trainable)(context_input)
 
-        c_cnn1 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        c_cnn1 = Convolution1D(int(hidden_units/2), 3, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(c_emb)
         c_cnn2 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(c_cnn1)
 
         c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='hard_sigmoid',
+                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
                        kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01), recurrent_regularizer= regularizers.l2(0.01),
                        dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True)(c_cnn2)
 
         c_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='hard_sigmoid',
+                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
                        kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01), recurrent_regularizer=regularizers.l2(0.01),
                        dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True,
                        go_backwards=True)(c_cnn2)
@@ -106,7 +99,7 @@ class sarcasm_model():
             emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable)(text_input)
 
-        t_cnn1 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        t_cnn1 = Convolution1D(int(hidden_units/2), 3, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(emb)
         t_cnn2 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(t_cnn1)
@@ -147,6 +140,8 @@ class sarcasm_model():
 
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         print('No of parameter:', model.count_params())
+
+        print(model.summary())
 
         return model
 
@@ -251,16 +246,16 @@ class train_model(sarcasm_model):
                                     hidden_units=hidden_units, trainable=True, dimension_length=11,batch_size=batch_size)
 
 
-        open(self._model_file + 'model.json', 'w').write(model.to_json())
-        save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
-        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
-                                   save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
-                                     cooldown=0, min_lr=0.000001)
-
-        model.fit([C, X, D], Y, batch_size=batch_size, epochs=3, validation_data=([tC, tX, tD], tY), shuffle=True,
-                  callbacks=[save_best,early_stopping, lr_tuner], class_weight=ratio)
+        # open(self._model_file + 'model.json', 'w').write(model.to_json())
+        # save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
+        # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+        #                            save_best_only=False)
+        # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+        # lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
+        #                              cooldown=0, min_lr=0.000001)
+        #
+        # model.fit([C, X, D], Y, batch_size=batch_size, epochs=3, validation_data=([tC, tX, tD], tY), shuffle=True,
+        #           callbacks=[save_best,early_stopping, lr_tuner], class_weight=ratio)
 
 
         if (cross_validation):

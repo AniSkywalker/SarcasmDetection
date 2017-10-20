@@ -1,5 +1,9 @@
 import os
 import sys
+
+from keras.layers.normalization import BatchNormalization
+from keras.layers.wrappers import TimeDistributed
+
 sys.path.append('../../')
 import collections
 import time
@@ -7,10 +11,10 @@ import numpy
 numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
-from keras.layers.core import Dropout, Dense, Activation
+from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.layers.convolutional import Convolution1D, Convolution2D, MaxPooling2D
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
@@ -39,22 +43,26 @@ class sarcasm_model():
 
         model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-                                input_shape=(1, maxlen)))
-        # model.add(MaxPooling1D(pool_size=3))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-                                input_shape=(1, maxlen-2)))
+        model.add(Reshape((maxlen,embedding_dimension,1)))
+        model.add(BatchNormalization(momentum=0.9))
+
+        model.add(Convolution2D(int(hidden_units/2), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(MaxPooling2D((2,1)))
+
+        model.add(Convolution2D(hidden_units, (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         # model.add(MaxPooling1D(pool_size=3))
 
         # model.add(Dropout(0.25))
 
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
+
+        model.add(Flatten())
 
 
-        model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
-        model.add(Dense(2))
-        model.add(Activation('softmax'))
+        model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
+        model.add(Dense(2,activation='softmax'))
+        # model.add(Activation('softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
@@ -102,7 +110,7 @@ class train_model(sarcasm_model):
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
 
         #embedding dimension
-        dimension_size = 256
+        dimension_size = 100
 
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -126,7 +134,7 @@ class train_model(sarcasm_model):
         early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
+        model.fit(X, Y, batch_size=32, epochs=100, validation_data=(tX,tY), shuffle=True,
                   callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
 
@@ -259,14 +267,14 @@ if __name__ == "__main__":
     test_file = basepath + '/resource/test/Test_v1.txt'
     word_file_path = basepath + '/resource/word_list.txt'
 
-    output_file = basepath + '/resource/text_model/TestResults.txt'
-    model_file = basepath + '/resource/text_model/weights/'
-    vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
+    output_file = basepath + '/resource/text_model_2D/TestResults.txt'
+    model_file = basepath + '/resource/text_model_2D/weights/'
+    vocab_file_path = basepath + '/resource/text_model_2D/vocab_list.txt'
 
-    # tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
 
-    t = test_model(word_file_path, model_file, vocab_file_path, output_file)
-    t.load_trained_model()
-    t.predict(test_file)
+    # t = test_model(word_file_path, model_file, vocab_file_path, output_file)
+    # t.load_trained_model()
+    # t.predict(test_file)
 
 
