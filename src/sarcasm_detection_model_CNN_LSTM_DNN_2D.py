@@ -37,13 +37,14 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension = 100, hidden_units=256,trainable=False):
+    def _build_network(self, vocab_size, maxlen, emb_weights=[], hidden_units=256, trainable=False):
         print('Build model...')
         model = Sequential()
 
-        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
+                            trainable=trainable))
 
-        model.add(Reshape((maxlen,embedding_dimension,1)))
+        model.add(Reshape((maxlen,emb_weights.shape[1],1)))
         model.add(BatchNormalization(momentum=0.9))
 
         model.add(Convolution2D(int(hidden_units/2), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
@@ -76,7 +77,7 @@ class train_model(sarcasm_model):
     print("Loading resource...")
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 input_weight_file_path=None):
+                 word2vec_path=None):
 
         sarcasm_model.__init__(self)
 
@@ -86,7 +87,6 @@ class train_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
-        self._input_weight_file_path = input_weight_file_path
 
         self.load_train_validation_data()
 
@@ -112,6 +112,9 @@ class train_model(sarcasm_model):
         #embedding dimension
         dimension_size = 100
 
+        W = dh.get_word2vec_weight(self._vocab, n=300,
+                                   path=word2vec_path)
+
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
         ratio = [max(ratio.values()) / value for key, value in ratio.items()]
@@ -125,7 +128,7 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
@@ -270,8 +273,9 @@ if __name__ == "__main__":
     output_file = basepath + '/resource/text_model_2D/TestResults.txt'
     model_file = basepath + '/resource/text_model_2D/weights/'
     vocab_file_path = basepath + '/resource/text_model_2D/vocab_list.txt'
+    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,word2vec_path=word2vec_path)
 
     # t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     # t.load_trained_model()

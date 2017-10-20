@@ -39,10 +39,10 @@ class sarcasm_model():
         model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+        model.add(Convolution1D(300, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen)))
         # model.add(MaxPooling1D(pool_size=3))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+        model.add(Convolution1D(300, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen-2)))
         # model.add(MaxPooling1D(pool_size=3))
 
@@ -123,7 +123,7 @@ class train_model(sarcasm_model):
         save_best = ModelCheckpoint(model_file + 'model_wv.json.hdf5', save_best_only=True)
         save_all = ModelCheckpoint(self._model_file + 'weights_wv.{epoch:02d}.hdf5',
                                    save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=25, verbose=1)
 
         # training
         model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
