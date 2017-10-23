@@ -58,8 +58,8 @@ class sarcasm_model():
         # model.add(Convolution2D(hidden_units, (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         # model.add(MaxPooling2D((2,1)))
 
-        model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
-        model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
+        # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
+        # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
 
         model.add(Flatten())
 
