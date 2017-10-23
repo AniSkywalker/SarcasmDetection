@@ -63,15 +63,15 @@ class sarcasm_model():
         context_input = Input(name='context', batch_shape=(batch_size, maxlen))
 
         if (len(c_emb_weights) == 0):
-            c_emb = Embedding(vocab_size, hidden_units, input_length=maxlen, embeddings_initializer='glorot_normal',
+            c_emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
                               trainable=trainable)(context_input)
         else:
             c_emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[c_emb_weights],
                               trainable=trainable)(context_input)
 
-        c_cnn1 = Convolution1D(int(hidden_units/2), 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        c_cnn1 = Convolution1D(int(hidden_units/2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(c_emb)
-        c_cnn2 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        c_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(c_cnn1)
 
         c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
@@ -93,15 +93,15 @@ class sarcasm_model():
         text_input = Input(name='text', batch_shape=(batch_size, maxlen))
 
         if (len(emb_weights) == 0):
-            emb = Embedding(vocab_size, hidden_units, input_length=maxlen, embeddings_initializer='glorot_normal',
+            emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
                             trainable=trainable)(text_input)
         else:
             emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable)(text_input)
 
-        t_cnn1 = Convolution1D(int(hidden_units/2), 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        t_cnn1 = Convolution1D(int(hidden_units/2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(emb)
-        t_cnn2 = Convolution1D(hidden_units, 3, kernel_initializer='he_normal', bias_initializer='he_normal',
+        t_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
                                activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(t_cnn1)
 
         t_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
@@ -216,8 +216,9 @@ class train_model(sarcasm_model):
         hidden_units = 1280
         dimension_size = 300
 
-        W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
-                                   path='/home/word2vec/GoogleNews-vectors-negative300.bin')
+        # W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
+        #                            path='/home/word2vec/GoogleNews-vectors-negative300.bin')
+        W = []
         cW = W
 
         print('Word2vec obtained....')
@@ -243,7 +244,7 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, c_emb_weights=cW,
-                                    hidden_units=hidden_units, trainable=True, dimension_length=11,batch_size=batch_size)
+                                    hidden_units=hidden_units, trainable=False, dimension_length=11,batch_size=batch_size)
 
 
         # open(self._model_file + 'model.json', 'w').write(model.to_json())
@@ -379,9 +380,9 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_context_moods.txt'
+    train_file = basepath + '/resource/train/Train_context_moods_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_context_moods.txt'
-    test_file = basepath + '/resource/test/Test_context_moods.txt'
+    test_file = basepath + '/resource/test/Test_context_AW.txt'
     word_file_path = basepath + '/resource/word_list.txt'
     output_file = basepath + '/resource/text_context_awc_model/TestResults.txt'
     model_file = basepath + '/resource/text_context_awc_model/weights/'
@@ -390,7 +391,7 @@ if __name__ == "__main__":
 
     tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
                      input_weight_file_path)
-    with K.get_session():
-        t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
-        t.load_trained_model()
-        t.predict(validation_file)
+    # with K.get_session():
+    #     t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
+    #     t.load_trained_model()
+    #     t.predict(validation_file)

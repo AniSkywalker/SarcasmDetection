@@ -121,13 +121,13 @@ class train_model(sarcasm_model):
 
         open(self._model_file + 'model_wv.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model_wv.json.hdf5', save_best_only=True)
-        save_all = ModelCheckpoint(self._model_file + 'weights_wv.{epoch:02d}.hdf5',
-                                   save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=25, verbose=1)
+        # save_all = ModelCheckpoint(self._model_file + 'weights_wv.{epoch:02d}.hdf5',
+        #                            save_best_only=False)
+        # early_stopping = EarlyStopping(monitor='val_loss', patience=25, verbose=1)
 
         # training
         model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+                  callbacks=[save_best],class_weight=ratio)
 
 
     def load_train_validation_data(self):

@@ -71,10 +71,14 @@ def filter_text(text, word_list, normalize_text=False, split_hashtag=False, igno
             filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
     return filtered_text
 
-def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignore_profiles=False):
+def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = False):
     data = []
     for line in lines:
         try:
+            # lowercase
+            if (lowercase):
+                line = line.lower()
+
             token = line.split('\t')
             # print(line)
 
@@ -109,19 +113,21 @@ def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignor
             # print('error', line)
     return data
 
-def loaddata(filename, word_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False):
+def loaddata(filename, word_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = False):
     word_list = None
     if (split_hashtag):
         word_list = InitializeWords(word_file_path)
 
     lines = open(filename,'r').readlines()
-    data = parsedata(lines, word_list, normalize_text=normalize_text, split_hashtag=split_hashtag, ignore_profiles=ignore_profiles)
+    data = parsedata(lines, word_list, normalize_text=normalize_text, split_hashtag=split_hashtag, ignore_profiles=ignore_profiles, lowercase = lowercase)
     return data
 
-def build_vocab(data,without_dimension=False):
-    #keep total words for speed
+def build_vocab(data, without_dimension=False, ignore_context = False):
     vocab = defaultdict(int)
 
+    st_words = set()
+    is_noun = lambda pos: pos[:2] == 'NN'
+    is_verb = lambda pos: pos[:2] == 'VB'
 
     total_words = 1
     if(not without_dimension):
@@ -130,21 +136,30 @@ def build_vocab(data,without_dimension=False):
             total_words = total_words + 1
 
     for sentence_no, token in enumerate(data):
+        # print(token[1])
+
         for word in token[1]:
+            if(st_words.__contains__(word.lower())):
+                continue
             if(not word in vocab):
                 vocab[word] = total_words
                 total_words = total_words + 1
 
         if(not without_dimension):
             for word in token[2]:
+                if (st_words.__contains__(word.lower())):
+                    continue
                 if(not word in vocab):
                     vocab[word] = total_words
                     total_words = total_words + 1
 
-        for word in token[3]:
-            if(not word in vocab):
-                vocab[word] = total_words
-                total_words = total_words + 1
+        if(ignore_context==False):
+            for word in token[3]:
+                if(not word in vocab):
+                    if (st_words.__contains__(word.lower())):
+                        continue
+                    vocab[word] = total_words
+                    total_words = total_words + 1
     return vocab
 
 def build_reverse_vocab(vocab):
