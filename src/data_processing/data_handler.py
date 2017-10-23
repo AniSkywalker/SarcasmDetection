@@ -113,7 +113,7 @@ def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignor
             # print('error', line)
     return data
 
-def loaddata(filename, word_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = False):
+def loaddata(filename, word_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = True):
     word_list = None
     if (split_hashtag):
         word_list = InitializeWords(word_file_path)
