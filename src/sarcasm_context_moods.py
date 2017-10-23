@@ -239,13 +239,18 @@ class train_model(sarcasm_model):
     validation = None
 
 
-    def load_train_validation_data(self):
+    def load_train_validation_test_data(self):
         print("Loading resource...")
         self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True, split_hashtag=True,
                                  ignore_profiles=False,lowercase = True)
         self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
                                       split_hashtag=True,
                                       ignore_profiles=False,lowercase = True)
+
+        if (self._test_file != None):
+            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=True)
 
     def split_train_validation(self, train, ratio=.1):
         test_indices = sorted([i for i in random.sample(range(len(train)), int(len(train) * ratio))])
@@ -272,9 +277,9 @@ class train_model(sarcasm_model):
         self._input_weight_file_path = input_weight_file_path
         self._test_file = test_file
 
-        self.load_train_validation_data()
+        self.load_train_validation_test_data()
 
-        batch_size = 8
+        batch_size = 32
 
         print(self._line_maxlen)
         self._vocab = dh.build_vocab(self.train,ignore_context=False)
@@ -305,9 +310,9 @@ class train_model(sarcasm_model):
         hidden_units = 1280
         dimension_size = 300
 
-        # W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
-        #                            path='/home/word2vec/GoogleNews-vectors-negative300.bin')
-        W = []
+        W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
+                                   path='/home/word2vec/GoogleNews-vectors-negative300.bin')
+
         cW = W
 
         print('Word2vec obtained....')
@@ -336,16 +341,16 @@ class train_model(sarcasm_model):
                                     hidden_units=hidden_units, trainable=False, dimension_length=11,batch_size=batch_size)
 
 
-        # open(self._model_file + 'model.json', 'w').write(model.to_json())
-        # save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
+        open(self._model_file + 'model.json', 'w').write(model.to_json())
+        save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
         # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
         #                            save_best_only=False)
         # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-        # lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
-        #                              cooldown=0, min_lr=0.000001)
-        #
-        # model.fit([C, X, D], Y, batch_size=batch_size, epochs=3, validation_data=([tC, tX, tD], tY), shuffle=True,
-        #           callbacks=[save_best,early_stopping, lr_tuner], class_weight=ratio)
+        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
+                                     cooldown=0, min_lr=0.000001)
+
+        model.fit([C, X, D], Y, batch_size=batch_size, epochs=100, validation_data=([tC, tX, tD], tY), shuffle=True,
+                  callbacks=[save_best, lr_tuner], class_weight=ratio)
 
 
         if (cross_validation):
@@ -479,7 +484,7 @@ if __name__ == "__main__":
     input_weight_file_path = basepath + '/resource/text_context_awc_model/partial_weights/weights.txt'
 
     tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
-                     input_weight_file_path, test_file=None)
+                     input_weight_file_path, test_file=test_file)
     # with K.get_session():
     #     t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
     #     t.load_trained_model()
