@@ -7,7 +7,7 @@ import numpy
 numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
-from keras.layers.core import Dropout, Dense, Activation
+from keras.layers.core import Dropout, Dense, Activation, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.convolutional import Convolution1D, MaxPooling1D
@@ -50,6 +50,8 @@ class sarcasm_model():
 
         # model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
         # model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+
+        model.add(Flatten())
 
 
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
