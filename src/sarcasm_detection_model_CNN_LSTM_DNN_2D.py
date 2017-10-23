@@ -48,19 +48,19 @@ class sarcasm_model():
 
         model.add(BatchNormalization(momentum=0.9))
 
-        model.add(Convolution2D(int(hidden_units/2), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(Convolution2D(int(hidden_units/8), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(MaxPooling2D((2,1)))
+
+        model.add(Convolution2D(int(hidden_units/4), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         model.add(MaxPooling2D((2,1)))
 
         model.add(Convolution2D(hidden_units, (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         model.add(MaxPooling2D((2,1)))
 
-
-
         # model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
         # model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
 
         model.add(Flatten())
-
 
         model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2,activation='softmax'))
@@ -77,7 +77,7 @@ class train_model(sarcasm_model):
     print("Loading resource...")
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 word2vec_path=None):
+                 word2vec_path=None, test_file=None):
 
         sarcasm_model.__init__(self)
 
@@ -93,7 +93,9 @@ class train_model(sarcasm_model):
         print(self._line_maxlen)
 
         #build vocabulary
-        self._vocab = dh.build_vocab(self.train)
+        if(self._test_file!=None):
+            self._vocab = dh.build_vocab(self.train + self.validation+self.test)
+        self._vocab = dh.build_vocab(self.train + self.validation)
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
@@ -141,13 +143,17 @@ class train_model(sarcasm_model):
                   callbacks=[save_best],class_weight=ratio)
 
 
-    def load_train_validation_data(self):
+    def load_train_validation_test_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
         self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
+        if (self._test_file != None):
+            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=True)
 
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))

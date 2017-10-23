@@ -119,7 +119,7 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=True)
 
         open(self._model_file + 'model_wv.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model_wv.json.hdf5', save_best_only=True)
