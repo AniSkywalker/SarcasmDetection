@@ -68,7 +68,7 @@ class train_model(sarcasm_model):
     print("Loading resource...")
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 word2vec_path=None):
+                 word2vec_path=None,test_file=None):
 
         sarcasm_model.__init__(self)
 
@@ -78,13 +78,19 @@ class train_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
+        self._test_file =test_file
 
-        self.load_train_validation_data()
+        self.load_train_validation_test_data()
 
         print(self._line_maxlen)
 
-        #build vocabulary
-        self._vocab = dh.build_vocab(self.train)
+
+        # build vocabulary
+        if (self._test_file != None):
+            self._vocab = dh.build_vocab(self.train + self.validation + self.test)
+        else:
+            self._vocab = dh.build_vocab(self.train + self.validation)
+
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
@@ -130,13 +136,18 @@ class train_model(sarcasm_model):
                   callbacks=[save_best],class_weight=ratio)
 
 
-    def load_train_validation_data(self):
+    def load_train_validation_test_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
         self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
+        if (self._test_file != None):
+            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=True)
+
 
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))
@@ -265,7 +276,7 @@ if __name__ == "__main__":
     #word2vec path
     word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file, word2vec_path=word2vec_path)
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file, word2vec_path=word2vec_path,test_file=test_file)
 
     t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     t.load_trained_model()
