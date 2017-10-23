@@ -265,7 +265,7 @@ class train_model(sarcasm_model):
         return train_data, validation_data
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 input_weight_file_path, cross_validation=False, cross_val_ratio=0.2, test_file=None):
+                 word2vec_path, cross_validation=False, cross_val_ratio=0.2, test_file=None):
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
@@ -274,7 +274,6 @@ class train_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
-        self._input_weight_file_path = input_weight_file_path
         self._test_file = test_file
 
         self.load_train_validation_test_data()
@@ -346,7 +345,7 @@ class train_model(sarcasm_model):
         # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
         #                            save_best_only=False)
         # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001,
+        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001,
                                      cooldown=0, min_lr=0.000001)
 
         model.fit([C, X, D], Y, batch_size=batch_size, epochs=100, validation_data=([tC, tX, tD], tY), shuffle=True,
@@ -481,10 +480,12 @@ if __name__ == "__main__":
     output_file = basepath + '/resource/text_context_awc_model/TestResults.txt'
     model_file = basepath + '/resource/text_context_awc_model/weights/'
     vocab_file_path = basepath + '/resource/text_context_awc_model/vocab_list.txt'
-    input_weight_file_path = basepath + '/resource/text_context_awc_model/partial_weights/weights.txt'
+
+    # word2vec path
+    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
     tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
-                     input_weight_file_path, test_file=test_file)
+                     word2vec_path, test_file=test_file)
     # with K.get_session():
     #     t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
     #     t.load_trained_model()
