@@ -263,7 +263,7 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     #word2vec path
-    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
+    word2vec_path = '/home/ubuntu/projects/word2vec/GoogleNews-vectors-negative300.bin'
 
     tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file, word2vec_path=word2vec_path)
 
