@@ -48,14 +48,14 @@ class sarcasm_model():
 
         model.add(BatchNormalization(momentum=0.9))
 
-        model.add(Convolution2D(int(hidden_units/8), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        model.add(MaxPooling2D((2,1)))
+        model.add(Convolution2D(int(hidden_units/8), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(MaxPooling2D((2,2)))
+        model.add(Dropout(0.5))
 
-        model.add(Convolution2D(int(hidden_units/4), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        model.add(MaxPooling2D((2,1)))
+        model.add(Convolution2D(int(hidden_units/4), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        model.add(MaxPooling2D((2,2)))
+        model.add(Dropout(0.5))
 
-        # model.add(Convolution2D(hidden_units, (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        # model.add(MaxPooling2D((2,1)))
 
         # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
         # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
@@ -63,6 +63,7 @@ class sarcasm_model():
         model.add(Flatten())
 
         model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
+        model.add(Dropout(0.5))
         model.add(Dense(2,activation='softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])

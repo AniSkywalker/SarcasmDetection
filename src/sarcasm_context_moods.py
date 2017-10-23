@@ -43,7 +43,7 @@ class sarcasm_model():
 
     def __init__(self):
         self._train_file = None
-        self._gold_data_path = None
+        self._test_file = None
         self._validation_file = None
         self._tweet_file = None
         self._output_file = None
@@ -260,7 +260,7 @@ class train_model(sarcasm_model):
         return train_data, validation_data
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 input_weight_file_path, cross_validation=False, cross_val_ratio=0.2):
+                 input_weight_file_path, cross_validation=False, cross_val_ratio=0.2, test_file=None):
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
@@ -270,6 +270,7 @@ class train_model(sarcasm_model):
         self._vocab_file_path = vocab_file
         self._output_file = output_file
         self._input_weight_file_path = input_weight_file_path
+        self._test_file = test_file
 
         self.load_train_validation_data()
 
@@ -478,7 +479,7 @@ if __name__ == "__main__":
     input_weight_file_path = basepath + '/resource/text_context_awc_model/partial_weights/weights.txt'
 
     tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
-                     input_weight_file_path)
+                     input_weight_file_path, test_file=None)
     # with K.get_session():
     #     t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
     #     t.load_trained_model()
