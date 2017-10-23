@@ -126,8 +126,6 @@ def build_vocab(data, without_dimension=False, ignore_context = False):
     vocab = defaultdict(int)
 
     st_words = set()
-    is_noun = lambda pos: pos[:2] == 'NN'
-    is_verb = lambda pos: pos[:2] == 'VB'
 
     total_words = 1
     if(not without_dimension):
