@@ -10,7 +10,6 @@ import time
 import numpy
 numpy.random.seed(1337)
 from sklearn import metrics
-from keras.layers import CuDNNLSTM
 from keras.models import Sequential, model_from_json
 from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten
 from keras.layers.embeddings import Embedding
