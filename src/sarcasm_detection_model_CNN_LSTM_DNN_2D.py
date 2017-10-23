@@ -44,9 +44,9 @@ class sarcasm_model():
         model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable))
 
-        # model.add(Reshape((maxlen,emb_weights.shape[1],1)))
-        #
-        # model.add(BatchNormalization(momentum=0.9))
+        model.add(Reshape((maxlen,emb_weights.shape[1],1)))
+
+        model.add(BatchNormalization(momentum=0.9))
 
         # model.add(Convolution2D(int(hidden_units/8), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         # model.add(MaxPooling2D((2,2)))
