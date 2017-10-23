@@ -57,8 +57,8 @@ class sarcasm_model():
         # model.add(Dropout(0.5))
 
 
-        # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
-        # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
 
         model.add(Flatten())
 
@@ -134,7 +134,7 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
