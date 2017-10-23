@@ -83,19 +83,22 @@ class train_model(sarcasm_model):
 
         self._train_file = train_file
         self._validation_file = validation_file
+        self._test_file = test_file
         self._word_file_path = word_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
 
-        self.load_train_validation_data()
+        self.load_train_validation_test_data()
 
         print(self._line_maxlen)
 
         #build vocabulary
         if(self._test_file!=None):
-            self._vocab = dh.build_vocab(self.train + self.validation+self.test)
-        self._vocab = dh.build_vocab(self.train + self.validation)
+            self._vocab = dh.build_vocab(self.train + self.validation + self.test)
+        else:
+            self._vocab = dh.build_vocab(self.train + self.validation)
+
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
@@ -283,10 +286,11 @@ if __name__ == "__main__":
     # word2vec path
     word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,word2vec_path=word2vec_path)
+    #test file is passed to build the vocabulary
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,word2vec_path=word2vec_path,test_file=test_file)
 
-    # t = test_model(word_file_path, model_file, vocab_file_path, output_file)
-    # t.load_trained_model()
-    # t.predict(test_file)
+    t = test_model(word_file_path, model_file, vocab_file_path, output_file)
+    t.load_trained_model()
+    t.predict(test_file)
 
 
