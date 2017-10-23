@@ -48,8 +48,8 @@ class sarcasm_model():
 
         # model.add(Dropout(0.25))
 
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+        # model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
+        # model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
 
 
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
@@ -126,7 +126,7 @@ class train_model(sarcasm_model):
         # early_stopping = EarlyStopping(monitor='val_loss', patience=25, verbose=1)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
+        model.fit(X, Y, batch_size=128, epochs=100, validation_data=(tX,tY), shuffle=True,
                   callbacks=[save_best],class_weight=ratio)
 
 

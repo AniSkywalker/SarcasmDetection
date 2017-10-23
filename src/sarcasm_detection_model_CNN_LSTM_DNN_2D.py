@@ -45,25 +45,25 @@ class sarcasm_model():
                             trainable=trainable))
 
         model.add(Reshape((maxlen,emb_weights.shape[1],1)))
+
         model.add(BatchNormalization(momentum=0.9))
 
         model.add(Convolution2D(int(hidden_units/2), (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
         model.add(MaxPooling2D((2,1)))
 
         model.add(Convolution2D(hidden_units, (5,1), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        # model.add(MaxPooling1D(pool_size=3))
+        model.add(MaxPooling2D((2,1)))
 
-        # model.add(Dropout(0.25))
 
-        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
-        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
+
+        # model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
+        # model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
 
         model.add(Flatten())
 
 
         model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2,activation='softmax'))
-        # model.add(Activation('softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
@@ -132,13 +132,13 @@ class train_model(sarcasm_model):
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
-        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
-                                   save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+        # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
+        #                            save_best_only=False)
+        # early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
         # training
         model.fit(X, Y, batch_size=32, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+                  callbacks=[save_best],class_weight=ratio)
 
 
     def load_train_validation_data(self):
@@ -273,7 +273,9 @@ if __name__ == "__main__":
     output_file = basepath + '/resource/text_model_2D/TestResults.txt'
     model_file = basepath + '/resource/text_model_2D/weights/'
     vocab_file_path = basepath + '/resource/text_model_2D/vocab_list.txt'
-    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
+
+    # word2vec path
+    word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
 
     tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,word2vec_path=word2vec_path)
 
