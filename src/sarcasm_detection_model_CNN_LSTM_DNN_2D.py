@@ -44,17 +44,17 @@ class sarcasm_model():
         model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable))
 
-        model.add(Reshape((maxlen,emb_weights.shape[1],1)))
+        # model.add(Reshape((maxlen,emb_weights.shape[1],1)))
+        #
+        # model.add(BatchNormalization(momentum=0.9))
 
-        model.add(BatchNormalization(momentum=0.9))
-
-        model.add(Convolution2D(int(hidden_units/8), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        model.add(MaxPooling2D((2,2)))
-        model.add(Dropout(0.5))
-
-        model.add(Convolution2D(int(hidden_units/4), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        model.add(MaxPooling2D((2,2)))
-        model.add(Dropout(0.5))
+        # model.add(Convolution2D(int(hidden_units/8), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        # model.add(MaxPooling2D((2,2)))
+        # model.add(Dropout(0.5))
+        #
+        # model.add(Convolution2D(int(hidden_units/4), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        # model.add(MaxPooling2D((2,2)))
+        # model.add(Dropout(0.5))
 
 
         # model.add(TimeDistributed(CuDNNLSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
@@ -62,8 +62,8 @@ class sarcasm_model():
 
         model.add(Flatten())
 
-        model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
-        model.add(Dropout(0.5))
+        # model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
+        # model.add(Dropout(0.5))
         model.add(Dense(2,activation='softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
@@ -134,7 +134,7 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=True)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
