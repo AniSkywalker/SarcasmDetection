@@ -484,9 +484,9 @@ if __name__ == "__main__":
     # word2vec path
     word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
-                     word2vec_path, test_file=test_file)
-    # with K.get_session():
-    #     t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
-    #     t.load_trained_model()
-    #     t.predict(validation_file)
+    # tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
+    #                  word2vec_path, test_file=test_file)
+    with K.get_session():
+        t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
+        t.load_trained_model()
+        t.predict(test_file)
