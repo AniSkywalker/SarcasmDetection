@@ -160,6 +160,9 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
     C = []
     A = []
 
+    known_words_set = set()
+    unknown_words_set = set()
+
     for label, line, dimensions, context, author in data:
         vec=[]
         context_vec=[]
@@ -174,14 +177,18 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
         for words in line:
             if(words in vocab):
                 vec.append(vocab[words])
+                known_words_set.add(words)
             else:
                 vec.append(vocab['unk'])
+                unknown_words_set.add(words)
         if(len(context)!=0):
             for words in line:
                 if(words in vocab):
                     context_vec.append(vocab[words])
+                    known_words_set.add(words)
                 else:
                     context_vec.append(vocab['unk'])
+                    unknown_words_set.add(words)
         else:
             context_vec = [vocab['unk']]
 
@@ -190,6 +197,8 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
         D.append(dvec)
         C.append(context_vec)
         A.append(author)
+
+    print('Word coverage:', len(unknown_words_set) / float(len(known_words_set) + len(unknown_words_set)))
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)
 
