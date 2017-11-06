@@ -1,5 +1,9 @@
 import os
 import sys
+
+from keras.layers.normalization import BatchNormalization
+from keras.layers.wrappers import TimeDistributed
+
 sys.path.append('../../')
 import collections
 import time
@@ -7,10 +11,10 @@ import numpy
 numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
-from keras.layers.core import Dropout, Dense, Activation
+from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.layers.convolutional import Convolution1D, Convolution2D, MaxPooling2D
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
@@ -33,28 +37,34 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension = 100, hidden_units=256,trainable=False):
+    def _build_network(self, vocab_size, maxlen, emb_weights=[], hidden_units=256, trainable=False):
         print('Build model...')
         model = Sequential()
 
-        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
+                            trainable=trainable))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-                                input_shape=(1, maxlen)))
-        # model.add(MaxPooling1D(pool_size=3))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-                                input_shape=(1, maxlen-2)))
-        # model.add(MaxPooling1D(pool_size=3))
+        model.add(Reshape((maxlen,emb_weights.shape[1],1)))
 
-        # model.add(Dropout(0.25))
+        model.add(BatchNormalization(momentum=0.9))
 
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+        # model.add(Convolution2D(int(hidden_units/8), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        # model.add(MaxPooling2D((2,2)))
+        # model.add(Dropout(0.5))
+        #
+        # model.add(Convolution2D(int(hidden_units/4), (5,5), kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
+        # model.add(MaxPooling2D((2,2)))
+        # model.add(Dropout(0.5))
 
 
-        model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
-        model.add(Dense(2))
-        model.add(Activation('softmax'))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True)))
+        model.add(TimeDistributed(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5)))
+
+        model.add(Flatten())
+
+        # model.add(Dense(int(hidden_units/2), kernel_initializer='he_normal', activation='sigmoid'))
+        # model.add(Dropout(0.5))
+        model.add(Dense(2,activation='softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
@@ -68,24 +78,28 @@ class train_model(sarcasm_model):
     print("Loading resource...")
 
     def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 input_weight_file_path=None):
+                 word2vec_path=None, test_file=None):
 
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
         self._validation_file = validation_file
+        self._test_file = test_file
         self._word_file_path = word_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
-        self._input_weight_file_path = input_weight_file_path
 
-        self.load_train_validation_data()
+        self.load_train_validation_test_data()
 
         print(self._line_maxlen)
 
         #build vocabulary
-        self._vocab = dh.build_vocab(self.train)
+        if(self._test_file!=None):
+            self._vocab = dh.build_vocab(self.train + self.validation + self.test)
+        else:
+            self._vocab = dh.build_vocab(self.train + self.validation)
+
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
@@ -102,7 +116,10 @@ class train_model(sarcasm_model):
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
 
         #embedding dimension
-        dimension_size = 256
+        dimension_size = 100
+
+        W = dh.get_word2vec_weight(self._vocab, n=300,
+                                   path=word2vec_path)
 
         #solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -117,26 +134,30 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
-        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
-                                   save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+        # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
+        #                            save_best_only=False)
+        # early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+        model.fit(X, Y, batch_size=128, epochs=100, validation_data=(tX,tY), shuffle=True,
+                  callbacks=[save_best],class_weight=ratio)
 
 
-    def load_train_validation_data(self):
+    def load_train_validation_test_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
         self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
+        if (self._test_file != None):
+            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=True)
 
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))
@@ -259,12 +280,15 @@ if __name__ == "__main__":
     test_file = basepath + '/resource/test/Test_v1.txt'
     word_file_path = basepath + '/resource/word_list.txt'
 
-    output_file = basepath + '/resource/text_model/TestResults.txt'
-    model_file = basepath + '/resource/text_model/weights/'
-    vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
+    output_file = basepath + '/resource/text_model_2D/TestResults.txt'
+    model_file = basepath + '/resource/text_model_2D/weights/'
+    vocab_file_path = basepath + '/resource/text_model_2D/vocab_list.txt'
 
-    #uncomment for training
-    # tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    # word2vec path
+    word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
+
+    #test file is passed to build the vocabulary
+    tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,word2vec_path=word2vec_path,test_file=test_file)
 
     t = test_model(word_file_path, model_file, vocab_file_path, output_file)
     t.load_trained_model()
