@@ -66,7 +66,7 @@ def split_ht(term, wordlist):
                 words = line
                 break
 
-    #removing hashtag sign
+    # removing hashtag sign
     words = [str(s) for s in words]
     # words = ["#" + str(s) for s in words]
     return words
@@ -92,8 +92,8 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
             continue
 
         # replacing emoji with its unicode description
-        if(replace_emoji):
-            if(t in emoji_dict):
+        if (replace_emoji):
+            if (t in emoji_dict):
                 t = emoji_dict.get(t).split('_')
                 filtered_text.extend(t)
                 continue
@@ -101,7 +101,7 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
         # splitting hastags
         if (split_hashtag and str(t).startswith("#")):
             splits = split_ht(t[1:], word_list)
-            #adding the hashtags
+            # adding the hashtags
             if (splits != None):
                 filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
                 continue
@@ -113,17 +113,15 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
         # appends the text
         filtered_text.append(t)
 
-
-
     return filtered_text
 
 
 def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
               lowercase=False, replace_emoji=True):
     data = []
-    for i,line in enumerate(lines):
-        if(i%100==0):
-            print(str(i)+'...',end='')
+    for i, line in enumerate(lines):
+        if (i % 100 == 0):
+            print(str(i) + '...', end='')
         try:
             # convert the line to lowercase
             if (lowercase):
