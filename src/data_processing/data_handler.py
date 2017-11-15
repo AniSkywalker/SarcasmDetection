@@ -4,19 +4,37 @@ from gensim.models.keyedvectors import KeyedVectors
 import numpy
 from nltk.tokenize import TweetTokenizer
 import SarcasmDetection.src.data_processing.glove2Word2vecLoader as glove
+from nltk.corpus import words
+import itertools
+
+'''
+nltk words corpus is needed
+'''
 
 
+# loading the emoji dataset
+def load_unicode_mapping(path):
+    emoji_dict = defaultdict()
+    with open(path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            tokens = line.strip().split('\t')
+            emoji_dict[tokens[0]] = tokens[1]
+    return emoji_dict
 
-def load_word2vec(path = None):
+
+def load_word2vec(path=None):
     word2vecmodel = KeyedVectors.load_word2vec_format(path, binary=True)
-
     return word2vecmodel
 
-def InitializeWords(word_file_path):
-    words=set()
-    content = open(word_file_path).readlines()
-    words.update([word for word in content])
-    return words
+
+def InitializeWords():
+    word_dictionary = set(words.words())
+    for alphabet in "bcdefghjklmnopqrstuvwxyz":
+        word_dictionary.remove(alphabet)
+
+    return word_dictionary
+
 
 def normalize_word(word):
     temp = word
@@ -28,84 +46,119 @@ def normalize_word(word):
             temp = w
     return w
 
+
 def split_ht(term, wordlist):
+    print('ht',term)
     words = []
+    # checking camel cases
     if (term != term.lower() and term != term.upper()):
         words = re.findall('[A-Z][^A-Z]*', term)
     else:
-        j = 0
-        while (j <= len(term)):
-            loc = j
-            for i in range(j + 1, len(term) + 1, 1):
-                if (wordlist.__contains__(term[j:i].lower())):
-                    loc = i
+        # splitting lower case and uppercase words
+        chars = [c for c in term.lower()]
+        outputs = [numpy.split(chars, idx) for n_splits in range(5) for idx in
+                   itertools.combinations(range(0, len(chars)), n_splits)]
 
-            if (loc == j):
-                j += 1
-            else:
-                words.append(term[j:loc])
-                j = loc
-    words = ["#" + str(s) for s in words]
+        for output in outputs:
+            line = [''.join(o) for o in output]
+            if (all([word in wordlist for word in line])):
+                '''
+                TODO pruning best split based on ngram collocation
+                '''
+                words = line
+                break
+
+    #removing hashtag sign
+    words = [str(s) for s in words]
+    # words = ["#" + str(s) for s in words]
     return words
 
-def filter_text(text, word_list, normalize_text=False, split_hashtag=False, ignore_profiles=False):
+
+def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+                replace_emoji=True):
     filtered_text = []
-    # print(text)
+
     for t in text:
-        splits=None
-        if(ignore_profiles and str(t).startswith("@")):
+        splits = None
+
+        # ignoring profile information if ignore_profiles is set
+        if (ignore_profiles and str(t).startswith("@")):
             continue
-        if(str(t).startswith('http')):
+
+        # ignoring links
+        if (str(t).startswith('http')):
             continue
+
+        # ignoring #sarcasm
         if (str(t).lower() == '#sarcasm'):
             continue
-        #removes repeatation of letters
+
+        # replacing emoji with its unicode description
+        if(replace_emoji):
+            if(t in emoji_dict):
+                t = emoji_dict.get(t).split('_')
+                filtered_text.extend(t)
+                continue
+
+        # splitting hastags
+        if (split_hashtag and str(t).startswith("#")):
+            splits = split_ht(t[1:], word_list)
+            #adding the hashtags
+            if (splits != None):
+                filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
+                continue
+
+        # removes repeatation of letters
         if (normalize_text):
             t = normalize_word(t)
-        if (split_hashtag and str(t).startswith("#")):
-            splits = split_ht(t, word_list)
 
-        #appends the text
+        # appends the text
         filtered_text.append(t)
-        if (splits != None):
-            filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
+
+
+
     return filtered_text
 
-def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = False):
+
+def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+              lowercase=False, replace_emoji=True):
     data = []
     for line in lines:
         try:
-            # lowercase
+            # convert the line to lowercase
             if (lowercase):
                 line = line.lower()
 
+            # split into token
             token = line.split('\t')
-            # print(line)
 
+            # label
             label = int(token[1].strip())
 
+            # tweet text
             target_text = TweetTokenizer().tokenize(token[2].strip())
 
             # filter text
-            target_text = filter_text(target_text, word_list, normalize_text, split_hashtag, ignore_profiles)
+            target_text = filter_text(target_text, word_list, emoji_dict, normalize_text, split_hashtag,
+                                      ignore_profiles, replace_emoji=replace_emoji)
             # print(filtered_text)
 
 
-            dimensions= []
-            if(len(token)>3 and token[3].strip()!='NA'):
+            dimensions = []
+            if (len(token) > 3 and token[3].strip() != 'NA'):
                 dimensions = [dimension.split('@@')[1] for dimension in token[3].strip().split('|')]
 
             context = []
-            if(len(token)>4):
-                if(token[4]!='NA'):
+            if (len(token) > 4):
+                if (token[4] != 'NA'):
                     context = TweetTokenizer().tokenize(token[4].strip())
                     context = filter_text(context, word_list, normalize_text, split_hashtag, ignore_profiles)
 
             author = 'NA'
-            if(len(token)>5):
-                author=token[5]
+            if (len(token) > 5):
+                author = token[5]
 
-            if(len(target_text)!=0):
+            if (len(target_text) != 0):
                 # print((label, target_text, dimensions, context, author))
                 data.append((label, target_text, dimensions, context, author))
         except:
@@ -113,23 +166,32 @@ def parsedata(lines, word_list, normalize_text=False, split_hashtag=False, ignor
             # print('error', line)
     return data
 
-def loaddata(filename, word_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False, lowercase = True):
-    word_list = None
-    if (split_hashtag):
-        word_list = InitializeWords(word_file_path)
 
-    lines = open(filename,'r').readlines()
-    data = parsedata(lines, word_list, normalize_text=normalize_text, split_hashtag=split_hashtag, ignore_profiles=ignore_profiles, lowercase = lowercase)
+def loaddata(filename, emoji_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+             lowercase=True, replace_emoji=True):
+    word_list = None
+    emoji_dict = None
+
+    if (split_hashtag):
+        word_list = InitializeWords()
+
+    if (replace_emoji):
+        emoji_dict = load_unicode_mapping(emoji_file_path)
+
+    lines = open(filename, 'r').readlines()
+    data = parsedata(lines, word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
+                     ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji)
     return data
 
-def build_vocab(data, without_dimension=False, ignore_context = False):
+
+def build_vocab(data, without_dimension=False, ignore_context=False):
     vocab = defaultdict(int)
 
     st_words = set()
 
     total_words = 1
-    if(not without_dimension):
-        for i in range(1,101):
+    if (not without_dimension):
+        for i in range(1, 101):
             vocab[str(i)] = total_words
             total_words = total_words + 1
 
@@ -137,36 +199,38 @@ def build_vocab(data, without_dimension=False, ignore_context = False):
         # print(token[1])
 
         for word in token[1]:
-            if(st_words.__contains__(word.lower())):
+            if (st_words.__contains__(word.lower())):
                 continue
-            if(not word in vocab):
+            if (not word in vocab):
                 vocab[word] = total_words
                 total_words = total_words + 1
 
-        if(not without_dimension):
+        if (not without_dimension):
             for word in token[2]:
                 if (st_words.__contains__(word.lower())):
                     continue
-                if(not word in vocab):
+                if (not word in vocab):
                     vocab[word] = total_words
                     total_words = total_words + 1
 
-        if(ignore_context==False):
+        if (ignore_context == False):
             for word in token[3]:
-                if(not word in vocab):
+                if (not word in vocab):
                     if (st_words.__contains__(word.lower())):
                         continue
                     vocab[word] = total_words
                     total_words = total_words + 1
     return vocab
 
+
 def build_reverse_vocab(vocab):
     rev_vocab = defaultdict(str)
     for k, v in vocab.items():
-        rev_vocab[v]=k
+        rev_vocab[v] = k
     return rev_vocab
 
-def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
+
+def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
     X = []
     Y = []
     D = []
@@ -177,26 +241,26 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
     unknown_words_set = set()
 
     for label, line, dimensions, context, author in data:
-        vec=[]
-        context_vec=[]
-        if(len(dimensions)!=0):
+        vec = []
+        context_vec = []
+        if (len(dimensions) != 0):
             dvec = [vocab.get(d) for d in dimensions]
         else:
-            dvec = [vocab.get('unk')]*11
+            dvec = [vocab.get('unk')] * 11
 
-        if drop_dimension_index!=None:
+        if drop_dimension_index != None:
             dvec.pop(drop_dimension_index)
 
         for words in line:
-            if(words in vocab):
+            if (words in vocab):
                 vec.append(vocab[words])
                 known_words_set.add(words)
             else:
                 vec.append(vocab['unk'])
                 unknown_words_set.add(words)
-        if(len(context)!=0):
+        if (len(context) != 0):
             for words in line:
-                if(words in vocab):
+                if (words in vocab):
                     context_vec.append(vocab[words])
                     known_words_set.add(words)
                 else:
@@ -215,11 +279,11 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index = None):
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)
 
+
 def pad_sequence_1d(sequences, maxlen=None, dtype='float32', padding='pre', truncating='pre', value=0.):
     X = [vectors for vectors in sequences]
 
     nb_samples = len(X)
-
 
     x = (numpy.ones((nb_samples, maxlen)) * value).astype(dtype)
 
@@ -240,22 +304,24 @@ def pad_sequence_1d(sequences, maxlen=None, dtype='float32', padding='pre', trun
 
     return x
 
-def write_vocab(filepath,vocab):
+
+def write_vocab(filepath, vocab):
     with open(filepath, 'w') as fw:
         for key, value in vocab.items():
             fw.write(str(key) + '\t' + str(value) + '\n')
 
-def get_word2vec_weight(vocab,n=300,path = None):
+
+def get_word2vec_weight(vocab, n=300, path=None):
     word2vecmodel = load_word2vec(path=path)
-    emb_weights= numpy.zeros((len(vocab.keys())+1,n))
-    for k,v in vocab.items():
-        if(word2vecmodel.__contains__(k)):
-            emb_weights[v,:]=word2vecmodel[k][:n]
+    emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
+    for k, v in vocab.items():
+        if (word2vecmodel.__contains__(k)):
+            emb_weights[v, :] = word2vecmodel[k][:n]
 
     return emb_weights
 
 
-def load_glove_model(vocab,n=200):
+def load_glove_model(vocab, n=200):
     word2vecmodel = glove.load_glove_word2vec('/home/glove/glove.twitter.27B/glove.twitter.27B.200d.txt')
 
     emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))

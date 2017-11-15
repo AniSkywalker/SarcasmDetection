@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('../../')
+
 import collections
 import time
 import numpy
@@ -24,7 +25,7 @@ class sarcasm_model():
     _tweet_file = None
     _output_file = None
     _model_file = None
-    _word_file_path = None
+    _emoji_file_path = None
     _vocab_file_path = None
     _input_weight_file_path = None
     _vocab = None
@@ -67,14 +68,14 @@ class train_model(sarcasm_model):
     validation = None
     print("Loading resource...")
 
-    def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
+    def __init__(self, train_file, validation_file, emoji_file_path,model_file, vocab_file, output_file,
                  input_weight_file_path=None):
 
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
         self._validation_file = validation_file
-        self._word_file_path = word_file_path
+        self._emoji_file_path = emoji_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
@@ -117,24 +118,24 @@ class train_model(sarcasm_model):
         print('validation_Y',tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
-
-        open(self._model_file + 'model.json', 'w').write(model.to_json())
-        save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
-        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
-                                   save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-
-        # training
-        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+        # model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
+        #
+        # open(self._model_file + 'model.json', 'w').write(model.to_json())
+        # save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
+        # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
+        #                            save_best_only=False)
+        # early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+        #
+        # # training
+        # model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
+        #           callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
 
     def load_train_validation_data(self):
-        self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True,
+        self.train = dh.loaddata(self._train_file, self._emoji_file_path,normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
-        self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
+        self.validation = dh.loaddata(self._validation_file, self._emoji_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
 
@@ -153,11 +154,11 @@ class test_model(sarcasm_model):
     test = None
     model = None
 
-    def __init__(self, word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path=None):
+    def __init__(self, model_file, vocab_file_path, output_file, input_weight_file_path=None):
         print('initializing...')
         sarcasm_model.__init__(self)
 
-        self._word_file_path = word_file_path
+        # self._word_file_path = word_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file_path
         self._output_file = output_file
@@ -189,7 +190,7 @@ class test_model(sarcasm_model):
     def predict(self,test_file,verbose=False):
         try:
             start = time.time()
-            self.test = dh.loaddata(test_file, self._word_file_path, normalize_text=True, split_hashtag=True,
+            self.test = dh.loaddata(test_file, normalize_text=True, split_hashtag=True,
                                  ignore_profiles=True)
             end = time.time()
             if(verbose==True):
@@ -254,20 +255,20 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_v1.txt'
+    train_file = basepath + '/resource/train/Train_v1_small.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
     test_file = basepath + '/resource/test/Test_v1.txt'
-    word_file_path = basepath + '/resource/word_list.txt'
+    emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
 
     output_file = basepath + '/resource/text_model/TestResults.txt'
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     #uncomment for training
-    # tr=train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, train_file, emoji_file_path, model_file, vocab_file_path, output_file)
 
-    t = test_model(word_file_path, model_file, vocab_file_path, output_file)
-    t.load_trained_model()
-    t.predict(test_file)
+    # t = test_model(model_file, vocab_file_path, output_file)
+    # t.load_trained_model()
+    # t.predict(test_file)
 
 
