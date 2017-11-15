@@ -121,7 +121,8 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
     data = []
     for i, line in enumerate(lines):
         if (i % 100 == 0):
-            print(str(i) + '...', end='')
+            print(str(i))
+
         try:
             # convert the line to lowercase
             if (lowercase):
