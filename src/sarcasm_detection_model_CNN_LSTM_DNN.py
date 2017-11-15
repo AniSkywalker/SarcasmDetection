@@ -135,9 +135,12 @@ class train_model(sarcasm_model):
         self.train = dh.loaddata(self._train_file, self._emoji_file_path,normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
+        print('Training data loading finished...')
+
         self.validation = dh.loaddata(self._validation_file, self._emoji_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
+        print('Validation data loading finished...')
 
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))
@@ -255,7 +258,7 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_v1.txt'
+    train_file = basepath + '/resource/train/Train_v1_small.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
     test_file = basepath + '/resource/test/Test_v1.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'

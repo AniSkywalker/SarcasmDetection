@@ -47,27 +47,39 @@ def normalize_word(word):
 
 
 def split_ht(term, wordlist):
+    print(term)
     words = []
+    max_coverage = 0
+    split_words_count = 4
+    full_min_covarage = split_words_count
     # checking camel cases
     if (term != term.lower() and term != term.upper()):
         words = re.findall('[A-Z][^A-Z]*', term)
     else:
-        # splitting lower case and uppercase words
+        # splitting lower case and uppercase words upto 4 words
         chars = [c for c in term.lower()]
-        outputs = [numpy.split(chars, idx) for n_splits in range(5) for idx in
+        outputs = [numpy.split(chars, idx) for n_splits in range(split_words_count) for idx in
                    itertools.combinations(range(0, len(chars)), n_splits)]
 
         for output in outputs:
             line = [''.join(o) for o in output]
-            if (all([word in wordlist for word in line])):
+            line_is_valid_word = [word in wordlist for word in line]
+            count = sum(line_is_valid_word)
+            if (all(line_is_valid_word)):
                 '''
                 TODO pruning best split based on ngram collocation
                 '''
+                if (count < full_min_covarage):
+                    full_min_covarage = count
+                    words = line
+
+            if (full_min_covarage == split_words_count and count > max_coverage):
+                max_coverage = count
                 words = line
-                break
 
     # removing hashtag sign
     words = [str(s) for s in words]
+    print(words)
     # words = ["#" + str(s) for s in words]
     return words
 
@@ -140,19 +152,20 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
             # filter text
             target_text = filter_text(target_text, word_list, emoji_dict, normalize_text, split_hashtag,
                                       ignore_profiles, replace_emoji=replace_emoji)
-            # print(filtered_text)
 
-
+            # awc dimensions
             dimensions = []
             if (len(token) > 3 and token[3].strip() != 'NA'):
                 dimensions = [dimension.split('@@')[1] for dimension in token[3].strip().split('|')]
 
+            # context tweet
             context = []
             if (len(token) > 4):
                 if (token[4] != 'NA'):
                     context = TweetTokenizer().tokenize(token[4].strip())
                     context = filter_text(context, word_list, normalize_text, split_hashtag, ignore_profiles)
 
+            # author
             author = 'NA'
             if (len(token) > 5):
                 author = token[5]
@@ -180,14 +193,11 @@ def loaddata(filename, emoji_file_path, normalize_text=False, split_hashtag=Fals
     lines = open(filename, 'r').readlines()
     data = parsedata(lines, word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji)
-    print('Loading finished...')
     return data
 
 
 def build_vocab(data, without_dimension=False, ignore_context=False):
     vocab = defaultdict(int)
-
-    st_words = set()
 
     total_words = 1
     if (not without_dimension):
@@ -199,16 +209,12 @@ def build_vocab(data, without_dimension=False, ignore_context=False):
         # print(token[1])
 
         for word in token[1]:
-            if (st_words.__contains__(word.lower())):
-                continue
             if (not word in vocab):
                 vocab[word] = total_words
                 total_words = total_words + 1
 
         if (not without_dimension):
             for word in token[2]:
-                if (st_words.__contains__(word.lower())):
-                    continue
                 if (not word in vocab):
                     vocab[word] = total_words
                     total_words = total_words + 1
@@ -216,8 +222,6 @@ def build_vocab(data, without_dimension=False, ignore_context=False):
         if (ignore_context == False):
             for word in token[3]:
                 if (not word in vocab):
-                    if (st_words.__contains__(word.lower())):
-                        continue
                     vocab[word] = total_words
                     total_words = total_words + 1
     return vocab
