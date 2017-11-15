@@ -255,7 +255,7 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_v1_small.txt'
+    train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
     test_file = basepath + '/resource/test/Test_v1.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     #uncomment for training
-    tr=train_model(train_file, train_file, emoji_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, emoji_file_path, model_file, vocab_file_path, output_file)
 
     # t = test_model(model_file, vocab_file_path, output_file)
     # t.load_trained_model()
