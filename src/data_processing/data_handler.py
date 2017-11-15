@@ -32,7 +32,6 @@ def InitializeWords():
     word_dictionary = set(words.words())
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
         word_dictionary.remove(alphabet)
-
     return word_dictionary
 
 
@@ -124,7 +123,7 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
     data = []
     for i,line in enumerate(lines):
         if(i%100==0):
-            print(str(i)+'...')
+            print(str(i)+'...',end='')
         try:
             # convert the line to lowercase
             if (lowercase):
