@@ -48,7 +48,6 @@ def normalize_word(word):
 
 
 def split_ht(term, wordlist):
-    print('ht',term)
     words = []
     # checking camel cases
     if (term != term.lower() and term != term.upper()):
@@ -123,7 +122,9 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
 def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
               lowercase=False, replace_emoji=True):
     data = []
-    for line in lines:
+    for i,line in enumerate(lines):
+        if(i%100==0):
+            print(str(i)+'...')
         try:
             # convert the line to lowercase
             if (lowercase):
@@ -163,7 +164,7 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
                 data.append((label, target_text, dimensions, context, author))
         except:
             raise
-            # print('error', line)
+    print('')
     return data
 
 
@@ -181,6 +182,7 @@ def loaddata(filename, emoji_file_path, normalize_text=False, split_hashtag=Fals
     lines = open(filename, 'r').readlines()
     data = parsedata(lines, word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji)
+    print('Loading finished...')
     return data
 
 
