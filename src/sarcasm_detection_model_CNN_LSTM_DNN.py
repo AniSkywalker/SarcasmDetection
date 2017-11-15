@@ -25,6 +25,7 @@ class sarcasm_model():
     _tweet_file = None
     _output_file = None
     _model_file = None
+    _word_file_path = None
     _emoji_file_path = None
     _vocab_file_path = None
     _input_weight_file_path = None
@@ -68,13 +69,14 @@ class train_model(sarcasm_model):
     validation = None
     print("Loading resource...")
 
-    def __init__(self, train_file, validation_file, emoji_file_path,model_file, vocab_file, output_file,
+    def __init__(self, train_file, validation_file, word_file_path, emoji_file_path,model_file, vocab_file, output_file,
                  input_weight_file_path=None):
 
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
         self._validation_file = validation_file
+        self._word_file_path = word_file_path
         self._emoji_file_path = emoji_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file
@@ -132,12 +134,12 @@ class train_model(sarcasm_model):
 
 
     def load_train_validation_data(self):
-        self.train = dh.loaddata(self._train_file, self._emoji_file_path,normalize_text=True,
+        self.train = dh.loaddata(self._train_file,self._word_file_path, self._emoji_file_path,normalize_text=True,
                               split_hashtag=True,
                               ignore_profiles=False)
         print('Training data loading finished...')
 
-        self.validation = dh.loaddata(self._validation_file, self._emoji_file_path, normalize_text=True,
+        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._emoji_file_path, normalize_text=True,
                                    split_hashtag=True,
                                    ignore_profiles=False)
         print('Validation data loading finished...')
@@ -258,9 +260,10 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_v1_small.txt'
+    train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
     test_file = basepath + '/resource/test/Test_v1.txt'
+    word_file_path = basepath + '/resource/word_list_freq.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
 
     output_file = basepath + '/resource/text_model/TestResults.txt'
@@ -268,7 +271,7 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     #uncomment for training
-    tr=train_model(train_file, validation_file, emoji_file_path, model_file, vocab_file_path, output_file)
+    tr=train_model(train_file, validation_file, word_file_path, emoji_file_path, model_file, vocab_file_path, output_file)
 
     # t = test_model(model_file, vocab_file_path, output_file)
     # t.load_trained_model()

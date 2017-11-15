@@ -7,10 +7,6 @@ import SarcasmDetection.src.data_processing.glove2Word2vecLoader as glove
 from nltk.corpus import words
 import itertools
 
-'''
-nltk words corpus is needed
-'''
-
 
 # loading the emoji dataset
 def load_unicode_mapping(path):
@@ -28,10 +24,15 @@ def load_word2vec(path=None):
     return word2vecmodel
 
 
-def InitializeWords():
-    word_dictionary = set(words.words())
+def InitializeWords(word_file_path):
+    word_dictionary = defaultdict()
+    with open(word_file_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            tokens = line.lower().strip().split('\t')
+            word_dictionary[tokens[0]] = int(tokens[1])
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
-        word_dictionary.remove(alphabet)
+        word_dictionary.__delitem__(alphabet)
     return word_dictionary
 
 
@@ -50,13 +51,13 @@ def split_ht(term, wordlist):
     print(term)
     words = []
     max_coverage = 0
-    split_words_count = 4
+    split_words_count = 5
     full_min_covarage = split_words_count
     # checking camel cases
     if (term != term.lower() and term != term.upper()):
         words = re.findall('[A-Z][^A-Z]*', term)
     else:
-        # splitting lower case and uppercase words upto 4 words
+        # splitting lower case and uppercase words upto 5 words
         chars = [c for c in term.lower()]
         outputs = [numpy.split(chars, idx) for n_splits in range(split_words_count) for idx in
                    itertools.combinations(range(0, len(chars)), n_splits)]
@@ -64,14 +65,25 @@ def split_ht(term, wordlist):
         for output in outputs:
             line = [''.join(o) for o in output]
             line_is_valid_word = [word in wordlist for word in line]
+
+                # if (score > max_coverage):
+            #     max_coverage = score
+            #     words = line
+
+
             count = sum(line_is_valid_word)
             if (all(line_is_valid_word)):
+                score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else -20 for word in line])
+                if (term == 'heismanhouse'):
+                    print('test::', score, line)
+
                 '''
                 TODO pruning best split based on ngram collocation
                 '''
                 if (count < full_min_covarage):
                     full_min_covarage = count
                     words = line
+
 
             if (full_min_covarage == split_words_count and count > max_coverage):
                 max_coverage = count
@@ -179,13 +191,15 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
     return data
 
 
-def loaddata(filename, emoji_file_path, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+def loaddata(filename, word_file_path, emoji_file_path, normalize_text=False, split_hashtag=False,
+             ignore_profiles=False,
              lowercase=True, replace_emoji=True):
     word_list = None
     emoji_dict = None
 
+    # load word dictionary
     if (split_hashtag):
-        word_list = InitializeWords()
+        word_list = InitializeWords(word_file_path)
 
     if (replace_emoji):
         emoji_dict = load_unicode_mapping(emoji_file_path)
