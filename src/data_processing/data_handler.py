@@ -4,7 +4,8 @@ from gensim.models.keyedvectors import KeyedVectors
 import numpy
 from nltk.tokenize import TweetTokenizer
 import SarcasmDetection.src.data_processing.glove2Word2vecLoader as glove
-from nltk.corpus import words
+from nltk.corpus import brown
+from nltk import FreqDist
 import itertools
 
 
@@ -25,12 +26,16 @@ def load_word2vec(path=None):
 
 
 def InitializeWords(word_file_path):
+    # word_dictionary = defaultdict()
+
     word_dictionary = defaultdict()
+
     with open(word_file_path, 'r') as f:
         lines = f.readlines()
         for line in lines:
             tokens = line.lower().strip().split('\t')
             word_dictionary[tokens[0]] = int(tokens[1])
+
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
         word_dictionary.__delitem__(alphabet)
     return word_dictionary
@@ -50,9 +55,11 @@ def normalize_word(word):
 def split_ht(term, wordlist):
     print(term)
     words = []
-    max_coverage = 0
-    split_words_count = 5
-    full_min_covarage = split_words_count
+    # max freq in brown corpus
+    penalty = -wordlist.most_common(1)[0][1]
+    max_coverage = penalty
+
+    split_words_count = 4
     # checking camel cases
     if (term != term.lower() and term != term.upper()):
         words = re.findall('[A-Z][^A-Z]*', term)
@@ -64,30 +71,11 @@ def split_ht(term, wordlist):
 
         for output in outputs:
             line = [''.join(o) for o in output]
-            line_is_valid_word = [word in wordlist for word in line]
+            score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else penalty for word in line])
 
-                # if (score > max_coverage):
-            #     max_coverage = score
-            #     words = line
-
-
-            count = sum(line_is_valid_word)
-            if (all(line_is_valid_word)):
-                score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else -20 for word in line])
-                if (term == 'heismanhouse'):
-                    print('test::', score, line)
-
-                '''
-                TODO pruning best split based on ngram collocation
-                '''
-                if (count < full_min_covarage):
-                    full_min_covarage = count
-                    words = line
-
-
-            if (full_min_covarage == split_words_count and count > max_coverage):
-                max_coverage = count
+            if (score > max_coverage):
                 words = line
+                max_coverage = score
 
     # removing hashtag sign
     words = [str(s) for s in words]

@@ -1,10 +1,12 @@
 import os
 import sys
+
 sys.path.append('../../')
 
 import collections
 import time
 import numpy
+
 numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
@@ -18,6 +20,7 @@ from keras.optimizers import Adam
 from keras.utils import np_utils
 from collections import defaultdict
 import SarcasmDetection.src.data_processing.data_handler as dh
+
 
 class sarcasm_model():
     _train_file = None
@@ -35,24 +38,25 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension = 100, hidden_units=256,trainable=False):
+    def _build_network(self, vocab_size, maxlen, embedding_dimension=100, hidden_units=256, trainable=False):
         print('Build model...')
         model = Sequential()
 
-        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        model.add(
+            Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
         model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen)))
         # model.add(MaxPooling1D(pool_size=3))
         model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-                                input_shape=(1, maxlen-2)))
+                                input_shape=(1, maxlen - 2)))
         # model.add(MaxPooling1D(pool_size=3))
 
         # model.add(Dropout(0.25))
 
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
+        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
+                       return_sequences=True))
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
-
 
         model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2))
@@ -64,14 +68,15 @@ class sarcasm_model():
         print(model.summary())
         return model
 
+
 class train_model(sarcasm_model):
     train = None
     validation = None
     print("Loading resource...")
 
-    def __init__(self, train_file, validation_file, word_file_path, emoji_file_path,model_file, vocab_file, output_file,
+    def __init__(self, train_file, validation_file, word_file_path, emoji_file_path, model_file, vocab_file,
+                 output_file,
                  input_weight_file_path=None):
-
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
@@ -87,27 +92,27 @@ class train_model(sarcasm_model):
 
         print(self._line_maxlen)
 
-        #build vocabulary
+        # build vocabulary
         self._vocab = dh.build_vocab(self.train)
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
         print('unk::', self._vocab['unk'])
 
-        dh.write_vocab(self._vocab_file_path,self._vocab)
+        dh.write_vocab(self._vocab_file_path, self._vocab)
 
-        #prepares input
+        # prepares input
         X, Y, D, C, A = dh.vectorize_word_dimension(self.train, self._vocab)
         X = dh.pad_sequence_1d(X, maxlen=self._line_maxlen)
 
-        #prepares input
-        tX, tY, tD, tC ,tA = dh.vectorize_word_dimension(self.validation, self._vocab)
+        # prepares input
+        tX, tY, tD, tC, tA = dh.vectorize_word_dimension(self.validation, self._vocab)
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
 
-        #embedding dimension
+        # embedding dimension
         dimension_size = 256
 
-        #solving class imbalance
+        # solving class imbalance
         ratio = self.calculate_label_ratio(Y)
         ratio = [max(ratio.values()) / value for key, value in ratio.items()]
         print('class ratio::', ratio)
@@ -116,8 +121,8 @@ class train_model(sarcasm_model):
 
         print('train_X', X.shape)
         print('train_Y', Y.shape)
-        print('validation_X',tX.shape)
-        print('validation_Y',tY.shape)
+        print('validation_X', tX.shape)
+        print('validation_Y', tY.shape)
 
         # trainable true if you want word2vec weights to be updated
         # model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
@@ -132,16 +137,16 @@ class train_model(sarcasm_model):
         # model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
         #           callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
-
     def load_train_validation_data(self):
-        self.train = dh.loaddata(self._train_file,self._word_file_path, self._emoji_file_path,normalize_text=True,
-                              split_hashtag=True,
-                              ignore_profiles=False)
+        self.train = dh.loaddata(self._train_file, self._word_file_path, self._emoji_file_path, normalize_text=True,
+                                 split_hashtag=True,
+                                 ignore_profiles=False)
         print('Training data loading finished...')
 
-        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._emoji_file_path, normalize_text=True,
-                                   split_hashtag=True,
-                                   ignore_profiles=False)
+        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._emoji_file_path,
+                                      normalize_text=True,
+                                      split_hashtag=True,
+                                      ignore_profiles=False)
         print('Validation data loading finished...')
 
     def get_maxlen(self):
@@ -154,6 +159,7 @@ class train_model(sarcasm_model):
 
     def calculate_label_ratio(self, labels):
         return collections.Counter(labels)
+
 
 class test_model(sarcasm_model):
     test = None
@@ -171,7 +177,7 @@ class test_model(sarcasm_model):
 
         print('test_maxlen', self._line_maxlen)
 
-    def load_trained_model(self,weight_file='model.json.hdf5'):
+    def load_trained_model(self, weight_file='model.json.hdf5'):
         start = time.time()
         self.__load_model(self._model_file + 'model.json', self._model_file + weight_file)
         end = time.time()
@@ -192,13 +198,13 @@ class test_model(sarcasm_model):
 
         return vocab
 
-    def predict(self,test_file,verbose=False):
+    def predict(self, test_file, verbose=False):
         try:
             start = time.time()
             self.test = dh.loaddata(test_file, normalize_text=True, split_hashtag=True,
-                                 ignore_profiles=True)
+                                    ignore_profiles=True)
             end = time.time()
-            if(verbose==True):
+            if (verbose == True):
                 print('test resource loading time::', (end - start))
 
             self._vocab = self.load_vocab()
@@ -207,15 +213,14 @@ class test_model(sarcasm_model):
             tX, tY, tD, tC, tA = dh.vectorize_word_dimension(self.test, self._vocab)
             tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
             end = time.time()
-            if(verbose==True):
+            if (verbose == True):
                 print('test resource preparation time::', (end - start))
 
             self.__predict_model(tX, self.test)
         except Exception as e:
-            print('Error:',e)
+            print('Error:', e)
 
-
-    def __predict_model(self,tX, test):
+    def __predict_model(self, tX, test):
         y = []
         y_pred = []
 
@@ -235,15 +240,12 @@ class test_model(sarcasm_model):
                 y.append(int(gold_label))
                 y_pred.append(predicted)
 
-
-
                 fd.write(str(label[0]) + '\t' + str(label[1]) + '\t'
                          + str(gold_label) + '\t'
                          + str(predicted) + '\t'
                          + ' '.join(words))
 
                 fd.write('\n')
-
 
             print()
 
@@ -255,7 +257,6 @@ class test_model(sarcasm_model):
             fd.close()
         except Exception as e:
             print(e)
-
 
 
 if __name__ == "__main__":
@@ -270,11 +271,10 @@ if __name__ == "__main__":
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
-    #uncomment for training
-    tr=train_model(train_file, validation_file, word_file_path, emoji_file_path, model_file, vocab_file_path, output_file)
+    # uncomment for training
+    tr = train_model(train_file, validation_file, word_file_path, emoji_file_path, model_file, vocab_file_path,
+                     output_file)
 
     # t = test_model(model_file, vocab_file_path, output_file)
     # t.load_trained_model()
     # t.predict(test_file)
-
-
