@@ -26,8 +26,6 @@ def load_word2vec(path=None):
 
 
 def InitializeWords(word_file_path):
-    # word_dictionary = defaultdict()
-
     word_dictionary = defaultdict()
 
     with open(word_file_path, 'r') as f:
@@ -37,7 +35,8 @@ def InitializeWords(word_file_path):
             word_dictionary[tokens[0]] = int(tokens[1])
 
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
-        word_dictionary.__delitem__(alphabet)
+        if(alphabet in word_dictionary):
+            word_dictionary.__delitem__(alphabet)
     return word_dictionary
 
 
@@ -51,12 +50,19 @@ def normalize_word(word):
             temp = w
     return w
 
+def load_split_word(split_word_file_path):
+    split_word_dictionary = defaultdict()
+    with open(split_word_file_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            tokens = line.lower().strip().split('\t')
+            split_word_dictionary[tokens[0]] = tokens[1:]
 
-def split_ht(term, wordlist):
+def split_ht(term, wordlist, split_word_list):
     print(term)
     words = []
     # max freq in brown corpus
-    penalty = -wordlist.most_common(1)[0][1]
+    penalty = -62713
     max_coverage = penalty
 
     split_words_count = 4
@@ -84,7 +90,7 @@ def split_ht(term, wordlist):
     return words
 
 
-def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+def filter_text(text, word_list, split_word_list,emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
                 replace_emoji=True):
     filtered_text = []
 
@@ -112,7 +118,7 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
 
         # splitting hastags
         if (split_hashtag and str(t).startswith("#")):
-            splits = split_ht(t[1:], word_list)
+            splits = split_ht(t[1:], word_list,split_word_list)
             # adding the hashtags
             if (splits != None):
                 filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
@@ -128,7 +134,7 @@ def filter_text(text, word_list, emoji_dict, normalize_text=False, split_hashtag
     return filtered_text
 
 
-def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
               lowercase=False, replace_emoji=True):
     data = []
     for i, line in enumerate(lines):
@@ -150,7 +156,7 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
             target_text = TweetTokenizer().tokenize(token[2].strip())
 
             # filter text
-            target_text = filter_text(target_text, word_list, emoji_dict, normalize_text, split_hashtag,
+            target_text = filter_text(target_text, word_list, split_word_list,emoji_dict, normalize_text, split_hashtag,
                                       ignore_profiles, replace_emoji=replace_emoji)
 
             # awc dimensions
@@ -179,11 +185,14 @@ def parsedata(lines, word_list, emoji_dict, normalize_text=False, split_hashtag=
     return data
 
 
-def loaddata(filename, word_file_path, emoji_file_path, normalize_text=False, split_hashtag=False,
+def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normalize_text=False, split_hashtag=False,
              ignore_profiles=False,
              lowercase=True, replace_emoji=True):
     word_list = None
     emoji_dict = None
+
+    #load split files
+    split_word_list = load_split_word(split_word_path)
 
     # load word dictionary
     if (split_hashtag):
@@ -193,7 +202,7 @@ def loaddata(filename, word_file_path, emoji_file_path, normalize_text=False, sp
         emoji_dict = load_unicode_mapping(emoji_file_path)
 
     lines = open(filename, 'r').readlines()
-    data = parsedata(lines, word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
+    data = parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji)
     return data
 
