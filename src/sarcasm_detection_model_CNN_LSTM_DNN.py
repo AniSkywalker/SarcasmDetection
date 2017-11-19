@@ -75,7 +75,8 @@ class train_model(sarcasm_model):
     validation = None
     print("Loading resource...")
 
-    def __init__(self, train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file, vocab_file,
+    def __init__(self, train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+                 vocab_file,
                  output_file,
                  input_weight_file_path=None):
         sarcasm_model.__init__(self)
@@ -140,12 +141,14 @@ class train_model(sarcasm_model):
         #           callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
     def load_train_validation_data(self):
-        self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,self._emoji_file_path, normalize_text=True,
+        self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
+                                 self._emoji_file_path, normalize_text=True,
                                  split_hashtag=True,
                                  ignore_profiles=False)
         print('Training data loading finished...')
 
-        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path,
+        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._split_word_file_path,
+                                      self._emoji_file_path,
                                       normalize_text=True,
                                       split_hashtag=True,
                                       ignore_profiles=False)
@@ -275,8 +278,8 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     # uncomment for training
-    tr = train_model(train_file, validation_file, word_file_path, emoji_file_path, model_file, vocab_file_path,
-                     output_file)
+    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+                     vocab_file_path, output_file)
 
     # t = test_model(model_file, vocab_file_path, output_file)
     # t.load_trained_model()

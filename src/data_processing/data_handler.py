@@ -37,6 +37,14 @@ def InitializeWords(word_file_path):
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
         if(alphabet in word_dictionary):
             word_dictionary.__delitem__(alphabet)
+
+    for word in ['di','um']:
+        if(word in word_dictionary):
+            word_dictionary.__delitem__(word)
+
+
+
+
     return word_dictionary
 
 
@@ -58,30 +66,43 @@ def load_split_word(split_word_file_path):
             tokens = line.lower().strip().split('\t')
             split_word_dictionary[tokens[0]] = tokens[1:]
 
-def split_ht(term, wordlist, split_word_list):
+def split_hashtags(term, wordlist, split_word_list):
     print(term)
     words = []
-    # max freq in brown corpus
-    penalty = -62713
+    # max freq in brown+gutenberg+reuters corpus
+    penalty = -2728
     max_coverage = penalty
 
     split_words_count = 4
     # checking camel cases
-    if (term != term.lower() and term != term.upper()):
-        words = re.findall('[A-Z][^A-Z]*', term)
-    else:
+    term = re.sub(r'([0-9]+)', r' \1',term)
+    term = re.sub(r'([A-Z][^A-Z ]+)', r' \1',term)
+    term = re.sub(r'([A-Z]{2,})+',r' \1',term)
+    words= term.strip().split(' ')
+
+    if(len(words)<2):
         # splitting lower case and uppercase words upto 5 words
         chars = [c for c in term.lower()]
-        outputs = [numpy.split(chars, idx) for n_splits in range(split_words_count) for idx in
-                   itertools.combinations(range(0, len(chars)), n_splits)]
+        n_splits = 0
+        found_all_words = False
 
-        for output in outputs:
-            line = [''.join(o) for o in output]
-            score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else penalty for word in line])
+        while(n_splits < split_words_count and not found_all_words):
+            for idx in itertools.combinations(range(0, len(chars)), n_splits):
+                output = numpy.split(chars, idx)
+                line = [''.join(o) for o in output]
 
-            if (score > max_coverage):
-                words = line
-                max_coverage = score
+                score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else penalty for word in line])
+
+                if(score > max_coverage):
+                    words = line
+                    max_coverage = score
+                    line_is_valid_word = [word in wordlist for word in line]
+
+                    if(all(line_is_valid_word)):
+                        found_all_words = True
+
+            n_splits = n_splits + 1
+
 
     # removing hashtag sign
     words = [str(s) for s in words]
@@ -118,7 +139,7 @@ def filter_text(text, word_list, split_word_list,emoji_dict, normalize_text=Fals
 
         # splitting hastags
         if (split_hashtag and str(t).startswith("#")):
-            splits = split_ht(t[1:], word_list,split_word_list)
+            splits = split_hashtags(t[1:], word_list, split_word_list)
             # adding the hashtags
             if (splits != None):
                 filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
