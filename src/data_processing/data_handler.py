@@ -64,16 +64,32 @@ def load_split_word(split_word_file_path):
         lines = f.readlines()
         for line in lines:
             tokens = line.lower().strip().split('\t')
-            split_word_dictionary[tokens[0]] = tokens[1:]
+            if(len(tokens)>=2):
+                split_word_dictionary[tokens[0]] = tokens[1]
+
+    print('split entry found:',len(split_word_dictionary.keys()))
+    return split_word_dictionary
 
 def split_hashtags(term, wordlist, split_word_list):
-    print(term)
+    # print(term)
+    if(split_word_list!=None and term.lower() in split_word_list):
+        # print('found')
+        return split_word_list.get(term.lower()).split(' ')
+
+
+    # discarding # if exists
+    if(term.startswith('#')):
+        term = term[1:]
+
+    if(wordlist!=None and term.lower() in wordlist):
+        return [term.lower()]
+
     words = []
     # max freq in brown+gutenberg+reuters corpus
     penalty = -2728
     max_coverage = penalty
 
-    split_words_count = 4
+    split_words_count = 6
     # checking camel cases
     term = re.sub(r'([0-9]+)', r' \1',term)
     term = re.sub(r'([A-Z][^A-Z ]+)', r' \1',term)
@@ -106,7 +122,7 @@ def split_hashtags(term, wordlist, split_word_list):
 
     # removing hashtag sign
     words = [str(s) for s in words]
-    print(words)
+    # print(words)
     # words = ["#" + str(s) for s in words]
     return words
 
@@ -139,7 +155,7 @@ def filter_text(text, word_list, split_word_list,emoji_dict, normalize_text=Fals
 
         # splitting hastags
         if (split_hashtag and str(t).startswith("#")):
-            splits = split_hashtags(t[1:], word_list, split_word_list)
+            splits = split_hashtags(t, word_list, split_word_list)
             # adding the hashtags
             if (splits != None):
                 filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
@@ -160,7 +176,7 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=Fals
     data = []
     for i, line in enumerate(lines):
         if (i % 100 == 0):
-            print(str(i))
+            print(str(i)+'...',end='',flush=True)
 
         try:
             # convert the line to lowercase
@@ -286,7 +302,7 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
 
         if drop_dimension_index != None:
             dvec.pop(drop_dimension_index)
-
+        # tweet
         for words in line:
             if (words in vocab):
                 vec.append(vocab[words])
@@ -294,6 +310,7 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
             else:
                 vec.append(vocab['unk'])
                 unknown_words_set.add(words)
+        #context_tweet
         if (len(context) != 0):
             for words in line:
                 if (words in vocab):
@@ -311,6 +328,9 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
         C.append(context_vec)
         A.append(author)
 
+    for word in list(unknown_words_set):
+        print(word)
+    print('Word coverage:', len(unknown_words_set),len(known_words_set))
     print('Word coverage:', len(unknown_words_set) / float(len(known_words_set) + len(unknown_words_set)))
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)
