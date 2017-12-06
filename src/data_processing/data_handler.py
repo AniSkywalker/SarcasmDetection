@@ -38,12 +38,9 @@ def InitializeWords(word_file_path):
         if(alphabet in word_dictionary):
             word_dictionary.__delitem__(alphabet)
 
-    for word in ['di','um']:
+    for word in ['di','um','ch','ve','ed','th','le','ct','ee','cre','ann','yi','tle','tl','ic','assis','picon','ng','pr','bz']:
         if(word in word_dictionary):
             word_dictionary.__delitem__(word)
-
-
-
 
     return word_dictionary
 
@@ -244,34 +241,46 @@ def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normali
     return data
 
 
-def build_vocab(data, without_dimension=False, ignore_context=False):
+def build_vocab(data, without_dimension=True, ignore_context=False, min_freq=0):
     vocab = defaultdict(int)
+    vocab_freq = defaultdict(int)
 
     total_words = 1
     if (not without_dimension):
         for i in range(1, 101):
-            vocab[str(i)] = total_words
-            total_words = total_words + 1
+            vocab_freq[str(i)] = 0
+            # vocab[str(i)] = total_words
+            # total_words = total_words + 1
 
     for sentence_no, token in enumerate(data):
-        # print(token[1])
-
         for word in token[1]:
-            if (not word in vocab):
-                vocab[word] = total_words
-                total_words = total_words + 1
+            if (word not in vocab_freq):
+                # vocab[word] = total_words
+                # total_words = total_words + 1
+                vocab_freq[word] = 0
+            vocab_freq[word] = vocab_freq.get(word) + 1
+
 
         if (not without_dimension):
             for word in token[2]:
-                if (not word in vocab):
-                    vocab[word] = total_words
-                    total_words = total_words + 1
+                # if (word not in vocab_freq):
+                #     vocab[word] = total_words
+                #     total_words = total_words + 1
+                vocab_freq[word]=vocab_freq.get(word) + 1
 
         if (ignore_context == False):
             for word in token[3]:
                 if (not word in vocab):
-                    vocab[word] = total_words
-                    total_words = total_words + 1
+                    # vocab[word] = total_words
+                    # total_words = total_words + 1
+                    vocab_freq[word] = 0
+                vocab_freq[word] = vocab_freq.get(word) + 1
+
+    for k,v in vocab_freq.items():
+        if(v>=min_freq):
+            vocab[k] = total_words
+            total_words = total_words + 1
+
     return vocab
 
 
@@ -292,6 +301,9 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
     known_words_set = set()
     unknown_words_set = set()
 
+    tokens = 0
+    token_coverage = 0
+
     for label, line, dimensions, context, author in data:
         vec = []
         context_vec = []
@@ -302,10 +314,13 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
 
         if drop_dimension_index != None:
             dvec.pop(drop_dimension_index)
+
         # tweet
         for words in line:
+            tokens = tokens + 1
             if (words in vocab):
                 vec.append(vocab[words])
+                token_coverage = token_coverage + 1
                 known_words_set.add(words)
             else:
                 vec.append(vocab['unk'])
@@ -313,8 +328,10 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
         #context_tweet
         if (len(context) != 0):
             for words in line:
+                tokens = tokens + 1
                 if (words in vocab):
                     context_vec.append(vocab[words])
+                    token_coverage = token_coverage + 1
                     known_words_set.add(words)
                 else:
                     context_vec.append(vocab['unk'])
@@ -328,9 +345,7 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
         C.append(context_vec)
         A.append(author)
 
-    for word in list(unknown_words_set):
-        print(word)
-    print('Word coverage:', len(unknown_words_set),len(known_words_set))
+    print('Token coverage:', token_coverage/float(tokens))
     print('Word coverage:', len(unknown_words_set) / float(len(known_words_set) + len(unknown_words_set)))
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)

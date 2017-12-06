@@ -96,7 +96,7 @@ class train_model(sarcasm_model):
         print(self._line_maxlen)
 
         # build vocabulary
-        self._vocab = dh.build_vocab(self.train)
+        self._vocab = dh.build_vocab(self.train,min_freq=2)
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
@@ -128,17 +128,17 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        # model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
-        #
-        # open(self._model_file + 'model.json', 'w').write(model.to_json())
-        # save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
-        # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
-        #                            save_best_only=False)
-        # early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-        #
-        # # training
-        # model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-        #           callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
+
+        open(self._model_file + 'model.json', 'w').write(model.to_json())
+        save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
+        save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
+                                   save_best_only=False)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+
+        # training
+        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
+                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
 
     def load_train_validation_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
@@ -170,12 +170,14 @@ class test_model(sarcasm_model):
     test = None
     model = None
 
-    def __init__(self, model_file, vocab_file_path, output_file, input_weight_file_path=None):
+    def __init__(self, model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file, input_weight_file_path=None):
         print('initializing...')
         sarcasm_model.__init__(self)
 
-        # self._word_file_path = word_file_path
         self._model_file = model_file
+        self._word_file_path = word_file_path
+        self._split_word_file_path = split_word_path
+        self._emoji_file_path = emoji_file_path
         self._vocab_file_path = vocab_file_path
         self._output_file = output_file
         self._input_weight_file_path = input_weight_file_path
@@ -206,8 +208,8 @@ class test_model(sarcasm_model):
     def predict(self, test_file, verbose=False):
         try:
             start = time.time()
-            self.test = dh.loaddata(test_file, normalize_text=True, split_hashtag=True,
-                                    ignore_profiles=True)
+            self.test = dh.loaddata(test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path, normalize_text=True, split_hashtag=True,
+                                    ignore_profiles=False)
             end = time.time()
             if (verbose == True):
                 print('test resource loading time::', (end - start))
@@ -268,7 +270,7 @@ if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
     train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
-    test_file = basepath + '/resource/test/Test_v1.txt'
+    test_file = basepath + '/resource/test/Test_v2.txt'
     word_file_path = basepath + '/resource/word_list_freq.txt'
     split_word_path = basepath + '/resource/word_split.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
@@ -278,9 +280,9 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     # uncomment for training
-    tr = train_model(train_file, test_file, word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file)
+    # tr = train_model(train_file, test_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    #                  vocab_file_path, output_file)
 
-    # t = test_model(model_file, vocab_file_path, output_file)
-    # t.load_trained_model()
-    # t.predict(test_file)
+    t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
+    t.load_trained_model()
+    t.predict(test_file)
