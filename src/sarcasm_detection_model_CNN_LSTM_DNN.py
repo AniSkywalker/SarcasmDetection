@@ -43,8 +43,7 @@ class sarcasm_model():
         print('Build model...')
         model = Sequential()
 
-        model.add(
-            Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
         model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen)))
@@ -96,7 +95,7 @@ class train_model(sarcasm_model):
         print(self._line_maxlen)
 
         # build vocabulary
-        self._vocab = dh.build_vocab(self.train,min_freq=2)
+        self._vocab = dh.build_vocab(self.train, min_freq=2)
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)

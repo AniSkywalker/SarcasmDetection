@@ -41,21 +41,20 @@ class sarcasm_model():
 
         # model.add(Reshape((maxlen, emb_weights.shape[1], 1)))
 
-        # model.add(Convolution1D(300, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-        #                         input_shape=(1, maxlen)))
-        # model.add(MaxPooling1D(pool_size=3))
-        # model.add(Convolution1D(300, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
-        #                         input_shape=(1, maxlen-2)))
+        model.add(Convolution1D(emb_weights.shape[1], 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+                                input_shape=(1, maxlen)))
         # model.add(MaxPooling1D(pool_size=3))
 
-        # model.add(Dropout(0.25))
+        model.add(Convolution1D(emb_weights.shape[1], 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+                                input_shape=(1, maxlen-2)))
+        # model.add(MaxPooling1D(pool_size=3))
+
+        model.add(Dropout(0.25))
 
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, return_sequences=True))
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
 
-
-
-        # model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
+        model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
         model.add(Dense(2,activation='softmax'))
         adam = Adam(lr=0.0001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
@@ -89,9 +88,9 @@ class train_model(sarcasm_model):
 
         # build vocabulary
         if (self._test_file != None):
-            self._vocab = dh.build_vocab(self.train + self.validation + self.test)
+            self._vocab = dh.build_vocab(self.train + self.validation + self.test, min_freq=2)
         else:
-            self._vocab = dh.build_vocab(self.train + self.validation)
+            self._vocab = dh.build_vocab(self.train + self.validation, min_freq=2)
 
         self._vocab['unk'] = len(self._vocab.keys()) + 1
 
