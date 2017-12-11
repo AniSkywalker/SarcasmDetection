@@ -35,11 +35,12 @@ def InitializeWords(word_file_path):
             word_dictionary[tokens[0]] = int(tokens[1])
 
     for alphabet in "bcdefghjklmnopqrstuvwxyz":
-        if(alphabet in word_dictionary):
+        if (alphabet in word_dictionary):
             word_dictionary.__delitem__(alphabet)
 
-    for word in ['di','um','ch','ve','ed','th','le','ct','ee','cre','ann','yi','tle','tl','ic','assis','picon','ng','pr','bz']:
-        if(word in word_dictionary):
+    for word in ['di', 'um', 'ch', 've', 'ed', 'th', 'le', 'ct', 'ee', 'cre', 'ann', 'yi', 'tle', 'tl', 'ic', 'assis',
+                 'picon', 'ng', 'pr', 'bz']:
+        if (word in word_dictionary):
             word_dictionary.__delitem__(word)
 
     return word_dictionary
@@ -55,30 +56,31 @@ def normalize_word(word):
             temp = w
     return w
 
+
 def load_split_word(split_word_file_path):
     split_word_dictionary = defaultdict()
     with open(split_word_file_path, 'r') as f:
         lines = f.readlines()
         for line in lines:
             tokens = line.lower().strip().split('\t')
-            if(len(tokens)>=2):
+            if (len(tokens) >= 2):
                 split_word_dictionary[tokens[0]] = tokens[1]
 
-    print('split entry found:',len(split_word_dictionary.keys()))
+    print('split entry found:', len(split_word_dictionary.keys()))
     return split_word_dictionary
+
 
 def split_hashtags(term, wordlist, split_word_list):
     # print(term)
-    if(split_word_list!=None and term.lower() in split_word_list):
+    if (split_word_list != None and term.lower() in split_word_list):
         # print('found')
         return split_word_list.get(term.lower()).split(' ')
 
-
     # discarding # if exists
-    if(term.startswith('#')):
+    if (term.startswith('#')):
         term = term[1:]
 
-    if(wordlist!=None and term.lower() in wordlist):
+    if (wordlist != None and term.lower() in wordlist):
         return [term.lower()]
 
     words = []
@@ -88,34 +90,33 @@ def split_hashtags(term, wordlist, split_word_list):
 
     split_words_count = 6
     # checking camel cases
-    term = re.sub(r'([0-9]+)', r' \1',term)
-    term = re.sub(r'([A-Z][^A-Z ]+)', r' \1',term)
-    term = re.sub(r'([A-Z]{2,})+',r' \1',term)
-    words= term.strip().split(' ')
+    term = re.sub(r'([0-9]+)', r' \1', term)
+    term = re.sub(r'([A-Z][^A-Z ]+)', r' \1', term)
+    term = re.sub(r'([A-Z]{2,})+', r' \1', term)
+    words = term.strip().split(' ')
 
-    if(len(words)<2):
+    if (len(words) < 2):
         # splitting lower case and uppercase words upto 5 words
         chars = [c for c in term.lower()]
         n_splits = 0
         found_all_words = False
 
-        while(n_splits < split_words_count and not found_all_words):
+        while (n_splits < split_words_count and not found_all_words):
             for idx in itertools.combinations(range(0, len(chars)), n_splits):
                 output = numpy.split(chars, idx)
                 line = [''.join(o) for o in output]
 
                 score = (1. / len(line)) * sum([wordlist.get(word) if word in wordlist else penalty for word in line])
 
-                if(score > max_coverage):
+                if (score > max_coverage):
                     words = line
                     max_coverage = score
                     line_is_valid_word = [word in wordlist for word in line]
 
-                    if(all(line_is_valid_word)):
+                    if (all(line_is_valid_word)):
                         found_all_words = True
 
             n_splits = n_splits + 1
-
 
     # removing hashtag sign
     words = [str(s) for s in words]
@@ -124,12 +125,19 @@ def split_hashtags(term, wordlist, split_word_list):
     return words
 
 
-def filter_text(text, word_list, split_word_list,emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+def filter_text(text, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False,
+                ignore_profiles=False,
                 replace_emoji=True):
     filtered_text = []
 
+    filter_list = ['/', '-', '=', '+', '…', '\\', '(', ')', '&', ':']
+
     for t in text:
         splits = None
+
+        # discarding symbols
+        if (str(t).lower() in filter_list):
+            continue
 
         # ignoring profile information if ignore_profiles is set
         if (ignore_profiles and str(t).startswith("@")):
@@ -168,12 +176,13 @@ def filter_text(text, word_list, split_word_list,emoji_dict, normalize_text=Fals
     return filtered_text
 
 
-def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False, ignore_profiles=False,
+def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False,
+              ignore_profiles=False,
               lowercase=False, replace_emoji=True):
     data = []
     for i, line in enumerate(lines):
         if (i % 100 == 0):
-            print(str(i)+'...',end='',flush=True)
+            print(str(i) + '...', end='', flush=True)
 
         try:
             # convert the line to lowercase
@@ -190,7 +199,8 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=Fals
             target_text = TweetTokenizer().tokenize(token[2].strip())
 
             # filter text
-            target_text = filter_text(target_text, word_list, split_word_list,emoji_dict, normalize_text, split_hashtag,
+            target_text = filter_text(target_text, word_list, split_word_list, emoji_dict, normalize_text,
+                                      split_hashtag,
                                       ignore_profiles, replace_emoji=replace_emoji)
 
             # awc dimensions
@@ -225,18 +235,22 @@ def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normali
     word_list = None
     emoji_dict = None
 
-    #load split files
+    # load split files
     split_word_list = load_split_word(split_word_path)
 
     # load word dictionary
     if (split_hashtag):
         word_list = InitializeWords(word_file_path)
 
+
     if (replace_emoji):
         emoji_dict = load_unicode_mapping(emoji_file_path)
 
+
+
     lines = open(filename, 'r').readlines()
-    data = parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=normalize_text, split_hashtag=split_hashtag,
+    data = parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=normalize_text,
+                     split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji)
     return data
 
@@ -260,13 +274,12 @@ def build_vocab(data, without_dimension=True, ignore_context=False, min_freq=0):
                 vocab_freq[word] = 0
             vocab_freq[word] = vocab_freq.get(word) + 1
 
-
         if (not without_dimension):
             for word in token[2]:
                 # if (word not in vocab_freq):
                 #     vocab[word] = total_words
                 #     total_words = total_words + 1
-                vocab_freq[word]=vocab_freq.get(word) + 1
+                vocab_freq[word] = vocab_freq.get(word) + 1
 
         if (ignore_context == False):
             for word in token[3]:
@@ -276,8 +289,8 @@ def build_vocab(data, without_dimension=True, ignore_context=False, min_freq=0):
                     vocab_freq[word] = 0
                 vocab_freq[word] = vocab_freq.get(word) + 1
 
-    for k,v in vocab_freq.items():
-        if(v>=min_freq):
+    for k, v in vocab_freq.items():
+        if (v >= min_freq):
             vocab[k] = total_words
             total_words = total_words + 1
 
@@ -325,7 +338,7 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
             else:
                 vec.append(vocab['unk'])
                 unknown_words_set.add(words)
-        #context_tweet
+        # context_tweet
         if (len(context) != 0):
             for words in line:
                 tokens = tokens + 1
@@ -345,8 +358,8 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
         C.append(context_vec)
         A.append(author)
 
-    print('Token coverage:', token_coverage/float(tokens))
-    print('Word coverage:', len(unknown_words_set) / float(len(known_words_set) + len(unknown_words_set)))
+    print('Token coverage:', token_coverage / float(tokens))
+    print('Word coverage:', len(known_words_set) / float(len(vocab.keys())))
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)
 

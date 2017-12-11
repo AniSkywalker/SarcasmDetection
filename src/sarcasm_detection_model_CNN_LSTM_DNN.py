@@ -39,11 +39,12 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension=100, hidden_units=256, trainable=False):
+    def _build_network(self, vocab_size, maxlen, embedding_dimension=256, hidden_units=256, trainable=False):
         print('Build model...')
         model = Sequential()
 
-        model.add(Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        model.add(
+            Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
         model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen)))
@@ -95,8 +96,10 @@ class train_model(sarcasm_model):
         print(self._line_maxlen)
 
         # build vocabulary
-        self._vocab = dh.build_vocab(self.train, min_freq=2)
-        self._vocab['unk'] = len(self._vocab.keys()) + 1
+        # truncates words with min freq=10
+        self._vocab = dh.build_vocab(self.train, min_freq=3)
+        if ('unk' not in self._vocab):
+            self._vocab['unk'] = len(self._vocab.keys()) + 1
 
         print(len(self._vocab.keys()) + 1)
         print('unk::', self._vocab['unk'])
@@ -127,7 +130,8 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size, trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size,
+                                    trainable=True)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
@@ -136,8 +140,8 @@ class train_model(sarcasm_model):
         early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=100, validation_data=(tX,tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping],class_weight=ratio)
+        model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True,
+                  callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
 
     def load_train_validation_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
@@ -169,7 +173,8 @@ class test_model(sarcasm_model):
     test = None
     model = None
 
-    def __init__(self, model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file, input_weight_file_path=None):
+    def __init__(self, model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file,
+                 input_weight_file_path=None):
         print('initializing...')
         sarcasm_model.__init__(self)
 
@@ -207,13 +212,15 @@ class test_model(sarcasm_model):
     def predict(self, test_file, verbose=False):
         try:
             start = time.time()
-            self.test = dh.loaddata(test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path, normalize_text=True, split_hashtag=True,
+            self.test = dh.loaddata(test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path,
+                                    normalize_text=True, split_hashtag=True,
                                     ignore_profiles=False)
             end = time.time()
             if (verbose == True):
                 print('test resource loading time::', (end - start))
 
             self._vocab = self.load_vocab()
+            print('vocab loaded...')
 
             start = time.time()
             tX, tY, tD, tC, tA = dh.vectorize_word_dimension(self.test, self._vocab)
@@ -281,7 +288,7 @@ if __name__ == "__main__":
     # uncomment for training
     # tr = train_model(train_file, test_file, word_file_path, split_word_path, emoji_file_path, model_file,
     #                  vocab_file_path, output_file)
-
+    #
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model()
     t.predict(test_file)
