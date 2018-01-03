@@ -7,9 +7,9 @@
 <br/>scipy
 <br/>gensim (if you are using word2vec)
 <br/>itertools
-<br/>
-<b>Clone the repository:</b>
 <br/><br/>
+<b>Clone the repository:</b>
+<br/>
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
 <br/>
 cd SarcasmDetection/src/
