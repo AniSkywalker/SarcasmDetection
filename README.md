@@ -1,19 +1,30 @@
 
-To train the model(using Theano):
+Pre-requisite:
+nltk (TweetTokenizer)
+Keras
+Tensorflow
+numpy
+scipy
+gensim (if you are using word2vec)
+itertools
+
+To train the model(using Tensorflow):
 
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
 
 cd SarcasmDetection/src/
-
-python sarcasm_detection_model_CNN_LSTM_DNN.py
 
 You can find the trained model file in the following link
 https://drive.google.com/drive/folders/0B7C_0ZfEBcpRbDZKelBZTFFsV0E?usp=sharing
 
 Download the trained model in /resource/text_model/weights/
 
-To run the trained model,
-run the testmodel
+run the script
+python sarcasm_detection_model_CNN_LSTM_DNN.py
+
+If you want to train the model with your own data, you can place your the Train, Development and Test data file at /resource/train, /resource/dev, /resource/test folder correspondingly.
+The system accept dataset in the following format:
+id<tab>label<tab>tweet (see train file for example)
 
 Please cite the following paper
 
