@@ -1,19 +1,20 @@
 
 Pre-requisite:
-nltk (TweetTokenizer)<br/>
-Keras
-Tensorflow
-numpy
-scipy
-gensim (if you are using word2vec)
-itertools
+<br/>nltk (TweetTokenizer)
+<br/>Keras
+<br/>Tensorflow
+<br/>numpy
+<br/>scipy
+<br/>gensim (if you are using word2vec)
+<br/>itertools
 
+<br/>
 To train the model(using Tensorflow):
-
+<br/>
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
-
+<br/>
 cd SarcasmDetection/src/
-
+<br/>
 You can find the trained model file in the following link
 https://drive.google.com/drive/folders/0B7C_0ZfEBcpRbDZKelBZTFFsV0E?usp=sharing
 
