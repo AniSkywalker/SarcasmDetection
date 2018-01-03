@@ -1,13 +1,12 @@
 
 Pre-requisite:
-<br/>nltk (TweetTokenizer)
+<br/><b>nltk (TweetTokenizer)</b>
 <br/>Keras
 <br/>Tensorflow
 <br/>numpy
 <br/>scipy
 <br/>gensim (if you are using word2vec)
 <br/>itertools
-
 <br/>
 To train the model(using Tensorflow):
 <br/><br/>
