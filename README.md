@@ -10,19 +10,20 @@ Pre-requisite:
 
 <br/>
 To train the model(using Tensorflow):
-<br/>
+<br/><br/>
 git clone git@github.com:AniSkywalker/SarcasmDetection.git
 <br/>
 cd SarcasmDetection/src/
-<br/>
+<br/><br/>
 You can find the trained model file in the following link
 https://drive.google.com/drive/folders/0B7C_0ZfEBcpRbDZKelBZTFFsV0E?usp=sharing
-
+<br/><br/>
 Download the trained model in /resource/text_model/weights/
 
-run the script
+run the script:
+<br/>
 python sarcasm_detection_model_CNN_LSTM_DNN.py
-
+<br/><br/>
 If you want to train the model with your own data, you can place your the Train, Development and Test data file at /resource/train, /resource/dev, /resource/test folder correspondingly.
 The system accepts dataset in the following format:
 id\<tab\>label\<tab\>tweet (see /resource/train/train_v1.txt as example)
