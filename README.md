@@ -24,7 +24,7 @@ Download the trained model in /resource/text_model/weights/
 python sarcasm_detection_model_CNN_LSTM_DNN.py
 <br/><br/>
 If you want to train the model with your own data, you can place your the Train, Development and Test data file at /resource/train, /resource/dev, /resource/test folder correspondingly.
-The system accepts dataset in the following format:
+The system accepts dataset in the tab separated format:
 <b>id\<tab\>label\<tab\>tweet</b> (see /resource/train/train_v1.txt as example)
 
 <b>0: Non-sarcastic</b>
