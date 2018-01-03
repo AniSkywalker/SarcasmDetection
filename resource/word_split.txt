@@ -25,7 +25,7 @@
 #AboutGetWeird	about get weird
 #aboutgrowth	about growth
 #AboutTheChild	about the child
-#abraxas	a br ax as
+#abraxas	abraxas
 #abs	abs
 #absolute	absolute
 #AbsolutElyx	absolut elyx
@@ -10643,7 +10643,7 @@
 #YoureMyHomeNewBeginnings	you re my home new beginnings
 #yourereallyfunny	you re really funny
 #youresofunny	you re so funny
-#youresooocool	you res ooo cool
+#youresooocool	you re sooo cool
 #YourHavingAlaugh	your having alaugh
 #yourmine	your mine
 #yours	yours
@@ -10679,7 +10679,7 @@
 #yyctraffic	yyc traffic
 #yyj	yyj
 #ZacBrownBand	zac brown band
-#zambalesadventure	zamb a les ad ven tu re
+#zambalesadventure	zamba les adventure
 #zano	zano
 #Zarasochiye	zara sochi ye
 #ZBoss	z boss

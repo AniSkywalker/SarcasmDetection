@@ -341,7 +341,7 @@ class train_model(sarcasm_model):
 
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
-        save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
+        save_best = ModelCheckpoint(self._model_file + 'model.json.hdf5', save_best_only=True, monitor='val_loss')
         # save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5',
         #                            save_best_only=False)
         # early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)

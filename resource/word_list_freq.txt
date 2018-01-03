@@ -86721,3 +86721,15 @@ karaoke	0
 abs	0
 google	0
 pixel	0
+1st	0
+2nd	0
+3rd	0
+4th	0
+5th	0
+6th	0
+7th	0
+8th	0
+9th	0
+0th	0
+'s	0
+wwe	0
