@@ -24,7 +24,7 @@ python sarcasm_detection_model_CNN_LSTM_DNN.py
 
 If you want to train the model with your own data, you can place your the Train, Development and Test data file at /resource/train, /resource/dev, /resource/test folder correspondingly.
 The system accept dataset in the following format:
-id<tab>label<tab>tweet (see train file for example)
+id\<tab\>label\<tab\>tweet (see train file for example)
 
 Please cite the following paper
 
