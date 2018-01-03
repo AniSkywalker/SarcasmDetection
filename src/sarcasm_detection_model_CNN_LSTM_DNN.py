@@ -96,7 +96,7 @@ class train_model(sarcasm_model):
         print(self._line_maxlen)
 
         # build vocabulary
-        # truncates words with min freq=10
+        # truncates words with min freq=1
         self._vocab = dh.build_vocab(self.train, min_freq=1)
         if ('unk' not in self._vocab):
             self._vocab['unk'] = len(self._vocab.keys()) + 1
