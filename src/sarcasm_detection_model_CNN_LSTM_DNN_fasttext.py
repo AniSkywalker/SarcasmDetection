@@ -53,30 +53,19 @@ class sarcasm_model():
         model.add(
             Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
-
         model.add(
-            Convolution1D(int(hidden_units / 2), 5, kernel_initializer='he_normal', padding='valid',
+            Convolution1D(hidden_units, 2, kernel_initializer='he_normal', padding='valid',
                           activation='sigmoid'))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Dropout(0.25))
 
-        # model.add(
-        #     Convolution1D(hidden_units, 5, kernel_initializer='he_normal', padding='valid', activation='sigmoid'))
-        # model.add(MaxPooling1D(pool_size=2))
-        # model.add(Dropout(0.25))
-
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
-                       return_sequences=True))
-        # model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
-        #                return_sequences=True))
-
+                       recurrent_activation=0.5, unroll=True, return_sequences=True))
 
         model.add(GlobalAveragePooling1D())
+        model.add(Dropout(0.5))
 
-
-        # model.add(Dense(int(hidden_units / 8), activation='relu'))
-        # model.add(Dropout(0.5))
-        model.add(Dense(3))
+        model.add(Dense(2))
         model.add(Activation('softmax'))
         adam = Adam(lr=0.001)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
@@ -236,7 +225,7 @@ class test_model(sarcasm_model):
             start = time.time()
             self.test = dh.loaddata(test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path,
                                     normalize_text=True, split_hashtag=True,
-                                    ignore_profiles=False, lowercase=False, n_grams=3,at_character=True)
+                                    ignore_profiles=False, lowercase=False, n_grams=3, at_character=True)
             end = time.time()
             if (verbose == True):
                 print('test resource loading time::', (end - start))
