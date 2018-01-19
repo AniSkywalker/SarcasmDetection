@@ -10,8 +10,9 @@ import numpy
 
 numpy.random.seed(1337)
 from sklearn import metrics
+from keras import initializers, regularizers, constraints, Input
 from keras.models import Sequential, model_from_json
-from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten
+from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten, Layer
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.convolutional import Convolution1D, MaxPooling1D, Convolution2D
@@ -21,6 +22,94 @@ from keras.optimizers import Adam
 from keras.utils import np_utils
 from collections import defaultdict
 import src.data_processing.data_handler as dh
+
+from keras import backend as K
+
+
+class Attention(Layer):
+    def __init__(self,
+                 W_regularizer=None, b_regularizer=None,
+                 W_constraint=None, b_constraint=None,
+                 bias=True, **kwargs):
+        """
+        Keras Layer that implements an Attention mechanism for temporal data.
+        Supports Masking.
+        Follows the work of Raffel et al. [https://arxiv.org/abs/1512.08756]
+        # Input shape
+            3D tensor with shape: `(samples, steps, features)`.
+        # Output shape
+            2D tensor with shape: `(samples, features)`.
+        :param kwargs:
+        Just put it on top of an RNN Layer (GRU/LSTM/SimpleRNN) with return_sequences=True.
+        The dimensions are inferred based on the output shape of the RNN.
+        Note: The layer has been tested with Keras 2.0.6
+        Example:
+            model.add(LSTM(64, return_sequences=True))
+            model.add(Attention())
+            # next add a Dense layer (for classification/regression) or whatever...
+        """
+        self.supports_masking = True
+        self.init = initializers.get('glorot_uniform')
+
+        self.W_regularizer = regularizers.get(W_regularizer)
+        self.b_regularizer = regularizers.get(b_regularizer)
+
+        self.W_constraint = constraints.get(W_constraint)
+        self.b_constraint = constraints.get(b_constraint)
+
+        self.bias = bias
+        super(Attention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        assert len(input_shape) == 3
+
+        self.W = self.add_weight((input_shape[-1],),
+                                 initializer=self.init,
+                                 name='{}_W'.format(self.name),
+                                 regularizer=self.W_regularizer,
+                                 constraint=self.W_constraint)
+        if self.bias:
+            self.b = self.add_weight((input_shape[1],),
+                                     initializer='zero',
+                                     name='{}_b'.format(self.name),
+                                     regularizer=self.b_regularizer,
+                                     constraint=self.b_constraint)
+        else:
+            self.b = None
+
+        self.built = True
+
+    def compute_mask(self, input, input_mask=None):
+        # do not pass the mask to the next layers
+        return None
+
+    def call(self, x, mask=None):
+        eij = K.squeeze(K.dot(x, K.expand_dims(self.W)), axis=-1)
+
+        if self.bias:
+            eij += self.b
+
+        eij = K.tanh(eij)
+
+        a = K.exp(eij)
+
+        # apply mask after the exp. will be re-normalized next
+        if mask is not None:
+            # Cast the mask to floatX to avoid float64 upcasting in theano
+            a *= K.cast(mask, K.floatx())
+
+        # in some cases especially in the early stages of training the sum may be almost zero
+        # and this results in NaN's. A workaround is to add a very small positive number ε to the sum.
+        # a /= K.cast(K.sum(a, axis=1, keepdims=True), K.floatx())
+        a /= K.cast(K.sum(a, axis=1, keepdims=True) + K.epsilon(), K.floatx())
+
+        a = K.expand_dims(a)
+
+        weighted_input = x * a
+        return K.sum(weighted_input, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[-1])
 
 
 class sarcasm_model():
@@ -44,6 +133,10 @@ class sarcasm_model():
         print('Build model...')
         model = Sequential()
 
+        # input = Input(shape=(maxlen,))
+
+        # emb = Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal')(input)
+
         model.add(
             Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
@@ -54,10 +147,12 @@ class sarcasm_model():
         model.add(Dropout(0.25))
 
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
-                       recurrent_activation=0.5, unroll=True, return_sequences=True))
+                       recurrent_dropout=0.5, unroll=True, return_sequences=True))
 
-        model.add(GlobalAveragePooling1D())
-        model.add(Dropout(0.5))
+        model.add(Attention())
+
+        # model.add(GlobalAveragePooling1D())
+        # model.add(Dropout(0.5))
 
         model.add(Dense(2))
         model.add(Activation('softmax'))
@@ -143,10 +238,10 @@ class train_model(sarcasm_model):
                                      cooldown=0, min_lr=0.000001)
 
         # training
-        # model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True,
-        #           callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
-        model.fit(X, Y, batch_size=32, epochs=100, validation_split=0.1, shuffle=True,
-                  callbacks=[save_best, lr_tuner, early_stopping], class_weight=ratio)
+        model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True, verbose=2,
+                  callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
+        # model.fit(X, Y, batch_size=32, epochs=100, validation_split=0.1, shuffle=True, verbose=1,
+        #           callbacks=[save_best, lr_tuner, early_stopping], class_weight=ratio)
 
     def load_train_validation_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
@@ -279,9 +374,9 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/spooky_train.tsv'
+    train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
-    test_file = basepath + '/resource/test/spooky_test.tsv'
+    test_file = basepath + '/resource/test/Test_v1.tsv'
     word_file_path = basepath + '/resource/word_list_freq.txt'
     split_word_path = basepath + '/resource/word_split.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'

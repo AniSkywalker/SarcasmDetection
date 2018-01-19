@@ -285,6 +285,7 @@ def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normali
         emoji_dict = load_unicode_mapping(emoji_file_path)
 
     lines = open(filename, 'r').readlines()
+
     data = parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=normalize_text,
                      split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji,
