@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from collections import defaultdict
 import re
 from gensim.models.keyedvectors import KeyedVectors
@@ -89,6 +91,8 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     if (split_word_list != None and term.lower() in split_word_list):
         # print('found')
         return split_word_list.get(term.lower()).split(' ')
+    else:
+        print(term)
 
     # discarding # if exists
     if (term.startswith('#')):
@@ -407,7 +411,7 @@ def pad_sequence_1d(sequences, maxlen=None, dtype='float32', padding='pre', trun
 
     nb_samples = len(X)
 
-    x = (numpy.ones((nb_samples, maxlen)) * value).astype(dtype)
+    x = (numpy.zeros((nb_samples, maxlen)) * value).astype(dtype)
 
     for idx, s in enumerate(X):
         if truncating == 'pre':

@@ -46,10 +46,10 @@ class sarcasm_model():
         model.add(
             Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='relu',
                                 input_shape=(1, maxlen)))
         # model.add(MaxPooling1D(pool_size=3))
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='relu',
                                 input_shape=(1, maxlen - 2)))
         # model.add(MaxPooling1D(pool_size=3))
 
@@ -57,9 +57,12 @@ class sarcasm_model():
 
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
                        return_sequences=True))
-        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
+        model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
+                       return_sequences=True))
 
-        model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='sigmoid'))
+        model.add(MaxPooling1D())
+
+        model.add(Dense(hidden_units, kernel_initializer='he_normal', activation='relu'))
         model.add(Dense(2))
         model.add(Activation('softmax'))
         adam = Adam(lr=0.0001)

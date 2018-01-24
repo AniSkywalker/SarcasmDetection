@@ -289,8 +289,8 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     # uncomment for training
-    # tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
-    #                  vocab_file_path, output_file)
+    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+                     vocab_file_path, output_file)
 
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model(weight_file='weights.05__.hdf5')
