@@ -75,12 +75,12 @@ class sarcasm_model():
         #     LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, recurrent_dropout=0.5,
         #          return_sequences=False), merge_mode='sum'))
         model.add(
-            LSTM(int(hidden_units / 4), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
+            LSTM(int(hidden_units / 8), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
                  recurrent_dropout=0.5,
                  return_sequences=False))
 
-        # model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
-        #
+        # model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='sigmoid'))
+
         model.add(Dropout(0.5))
 
         model.add(Dense(2, activation='softmax'))
@@ -144,8 +144,7 @@ class train_model(sarcasm_model):
         dimension_size = 100
         W = []
 
-        W = dh.get_word2vec_weight(self._vocab, n=200,
-                                   path=word2vec_path)
+        W = dh.get_word2vec_weight(self._vocab, n=200, path=word2vec_path)
 
         # solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -160,20 +159,21 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, trainable=False)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, hidden_units=256, emb_weights=W,
+                                    trainable=False)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
         save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
                                    save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto',
+        early_stopping = EarlyStopping(monitor='loss', patience=50, verbose=1)
+        lr_tuner = ReduceLROnPlateau(monitor='loss', factor=0.1, patience=10, verbose=1, mode='auto',
                                      epsilon=0.0001,
                                      cooldown=0, min_lr=0.000001)
 
         # training
-        model.fit(X, Y, batch_size=128, epochs=100, validation_data=(tX, tY), shuffle=True,
-                  callbacks=[save_best], class_weight=ratio)
+        model.fit(X, Y, batch_size=128, epochs=500, validation_data=(tX, tY), shuffle=True,
+                  callbacks=[save_best, early_stopping, lr_tuner], class_weight=ratio)
 
     def load_train_validation_test_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
@@ -319,7 +319,7 @@ if __name__ == "__main__":
 
     # word2vec path
     word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
-    word2vec_path = '/home/striker/word2vec/glove_model_200.txt.bin'
+    word2vec_path = '/home/word2vec/glove_model_200.txt.bin'
 
     # test file is passed to build the vocabulary
     tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,

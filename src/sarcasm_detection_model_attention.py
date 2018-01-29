@@ -129,16 +129,16 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 50
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension=256, hidden_units=256, trainable=False):
+    def _build_network(self, vocab_size, maxlen, emb_weights = [], embedding_dimension=256, hidden_units=256, trainable=False):
         print('Build model...')
         model = Sequential()
 
-        # input = Input(shape=(maxlen,))
-
-        # emb = Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal')(input)
-
-        model.add(
-            Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        if(len(emb_weights)==0):
+            model.add(
+                Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
+        else:
+            model.add(Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
+                            trainable=trainable))
 
         model.add(
             Convolution1D(hidden_units, 2, kernel_initializer='he_normal', padding='valid',
@@ -151,8 +151,6 @@ class sarcasm_model():
 
         model.add(Attention())
 
-        # model.add(GlobalAveragePooling1D())
-        # model.add(Dropout(0.5))
 
         model.add(Dense(2))
         model.add(Activation('softmax'))
@@ -172,7 +170,7 @@ class train_model(sarcasm_model):
     def __init__(self, train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                  vocab_file,
                  output_file,
-                 input_weight_file_path=None):
+                 input_weight_file_path=None, word2vec_path=None):
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
@@ -211,6 +209,9 @@ class train_model(sarcasm_model):
         # embedding dimension
         dimension_size = 30
 
+        W = dh.get_word2vec_weight(self._vocab, n=300,
+                                   path=word2vec_path)
+
         # solving class imbalance
         ratio = self.calculate_label_ratio(Y)
         ratio = [max(ratio.values()) / value for key, value in ratio.items()]
@@ -224,9 +225,9 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         # trainable true if you want word2vec weights to be updated
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, hidden_units=128,
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, hidden_units=128,
                                     embedding_dimension=dimension_size,
-                                    trainable=True)
+                                    trainable=False)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
@@ -238,7 +239,7 @@ class train_model(sarcasm_model):
                                      cooldown=0, min_lr=0.000001)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True, verbose=2,
+        model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True, verbose=1,
                   callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
         # model.fit(X, Y, batch_size=32, epochs=100, validation_split=0.1, shuffle=True, verbose=1,
         #           callbacks=[save_best, lr_tuner, early_stopping], class_weight=ratio)
@@ -295,7 +296,7 @@ class test_model(sarcasm_model):
         print('model loading time::', (end - start))
 
     def __load_model(self, model_path, model_weight_path):
-        self.model = model_from_json(open(model_path).read())
+        self.model = model_from_json(open(model_path).read(),custom_objects={'Attention':Attention})
         print('model loaded from file...')
         self.model.load_weights(model_weight_path)
         print('model weights loaded from file...')
@@ -376,7 +377,7 @@ if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
     train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
-    test_file = basepath + '/resource/test/Test_v1.tsv'
+    test_file = basepath + '/resource/test/Test_v1.txt'
     word_file_path = basepath + '/resource/word_list_freq.txt'
     split_word_path = basepath + '/resource/word_split.txt'
     emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
@@ -385,10 +386,13 @@ if __name__ == "__main__":
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
+    # word2vec path
+    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
+
     # uncomment for training
     tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file)
+                     vocab_file_path, output_file,word2vec_path=word2vec_path)
 
-    # t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
-    # t.load_trained_model()
-    # t.predict(test_file)
+    t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
+    t.load_trained_model()
+    t.predict(test_file)
