@@ -449,7 +449,6 @@ def get_word2vec_weight(vocab, n=300, path=None):
 
 def load_glove_model(vocab, n=200):
     word2vecmodel = glove.load_glove_word2vec('/home/glove/glove.twitter.27B/glove.twitter.27B.200d.txt')
-    word2vecmodel.save_word2vec_format('/home/glove/glove_model_200.txt',binary=True)
 
     emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
     for k, v in vocab.items():

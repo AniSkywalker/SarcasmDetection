@@ -80,7 +80,7 @@ def load_glove_word2vec(filename):
         prepend_slow(filename, gensim_file, gensim_first_line)
 
     # Demo: Loads the newly created glove_model.txt into gensim API.
-    model = gensim.models.KeyedVectors.load_word2vec_format(gensim_file, binary=False)  # GloVe Model
+    model = gensim.models.Word2Vec.load_word2vec_format(gensim_file, binary=False)  # GloVe Model
 
     return model
 
