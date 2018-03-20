@@ -380,7 +380,7 @@ class test_model(sarcasm_model):
     test = None
     model = None
 
-    def __init__(self, word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path):
+    def __init__(self, word_file_path, model_file, vocab_file_path, output_file):
         print('initializing...')
         sarcasm_model.__init__(self)
 
@@ -388,7 +388,7 @@ class test_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file_path
         self._output_file = output_file
-        self._input_weight_file_path = input_weight_file_path
+
 
         # self._line_maxlen = 45
         print('test_maxlen', self._line_maxlen)
@@ -493,6 +493,6 @@ if __name__ == "__main__":
     tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
                      word2vec_path, test_file=test_file)
     with K.get_session():
-        t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
+        t = test_model(word_file_path, model_file, vocab_file_path, output_file)
         t.load_trained_model()
         t.predict(test_file)
