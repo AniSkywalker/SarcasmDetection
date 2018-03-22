@@ -360,7 +360,7 @@ class train_model(sarcasm_model):
                   callbacks=[save_best, lr_tuner], class_weight=ratio)
 
         if (cross_validation):
-            t = test_model(word_file_path, model_file, vocab_file_path, output_file, input_weight_file_path)
+            t = test_model(word_file_path, model_file, vocab_file_path, output_file)
             t.load_trained_model()
             t.predict_cross_validation(tC, tX, tD, self.validation)
 
