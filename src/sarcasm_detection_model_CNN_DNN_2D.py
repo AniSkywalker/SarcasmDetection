@@ -71,16 +71,8 @@ class sarcasm_model():
 
         model.add(Reshape((model.output_shape[1], -1)))
 
-        # model.add(Bidirectional(
-        #     LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, recurrent_dropout=0.5,
-        #          return_sequences=False), merge_mode='sum'))
-        model.add(
-            LSTM(int(hidden_units / 4), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
-                 recurrent_dropout=0.5,
-                 return_sequences=False))
 
-        # model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
-        #
+        model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
         model.add(Dropout(0.5))
 
         model.add(Dense(2, activation='softmax'))
@@ -319,13 +311,13 @@ if __name__ == "__main__":
 
     # word2vec path
     word2vec_path = '/home/ubuntu/word2vec/GoogleNews-vectors-negative300.bin'
-    word2vec_path = '/home/striker/word2vec/glove_model_200.txt.bin'
+    glove_path = '/home/striker/word2vec/glove_model_200.txt.bin'
 
     # test file is passed to build the vocabulary
     tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                      vocab_file_path, output_file,
                      word2vec_path=word2vec_path, test_file=test_file)
-    #
+
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model()
     t.predict(test_file)
