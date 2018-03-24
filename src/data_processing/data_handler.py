@@ -163,6 +163,11 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
 
     return words
 
+def expand_abbreviation(word):
+
+    return word
+
+
 
 def filter_text(text, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False,
                 ignore_profiles=False,

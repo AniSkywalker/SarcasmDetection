@@ -69,7 +69,7 @@ class sarcasm_model():
         model.add(MaxPooling2D((2, 1)))
         model.add(Dropout(0.5))
 
-        model.add(Reshape((model.output_shape[1], -1)))
+        model.add(Flatten())
 
 
         model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
@@ -158,8 +158,8 @@ class train_model(sarcasm_model):
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
         save_all = ModelCheckpoint(self._model_file + 'weights.{epoch:02d}__.hdf5',
                                    save_best_only=False)
-        early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-        lr_tuner = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto',
+        early_stopping = EarlyStopping(monitor='loss', patience=20, verbose=1)
+        lr_tuner = ReduceLROnPlateau(monitor='loss', factor=0.1, patience=10, verbose=1, mode='auto',
                                      epsilon=0.0001,
                                      cooldown=0, min_lr=0.000001)
 
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # test file is passed to build the vocabulary
     tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                      vocab_file_path, output_file,
-                     word2vec_path=word2vec_path, test_file=test_file)
+                     word2vec_path=glove_path, test_file=test_file)
 
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model()
