@@ -77,7 +77,7 @@ class train_model(sarcasm_model):
     def __init__(self, train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                  vocab_file,
                  output_file,
-                 input_weight_file_path=None):
+                 word2vec_path=None):
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
@@ -115,6 +115,9 @@ class train_model(sarcasm_model):
 
         # embedding dimension
         dimension_size = 30
+
+        W = dh.get_fasttext_weight(self._vocab, n=dimension_size,
+                                   path=word2vec_path)
 
         # solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -290,9 +293,12 @@ if __name__ == "__main__":
     model_file = basepath + '/resource/text_model/weights/'
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
+    #fastext model path
+    fasttext_path = '/home/fasttext/en.wiki.bin'
+
     # uncomment for training
     tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file)
+                     vocab_file_path, output_file, fasttext_path)
 
     # t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     # t.load_trained_model()

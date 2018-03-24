@@ -3,6 +3,7 @@ sys.path.append('../')
 from collections import defaultdict
 import re
 from gensim.models.keyedvectors import KeyedVectors
+from gensim.models.wrappers import FastText
 import numpy
 from nltk.tokenize import TweetTokenizer
 import src.data_processing.glove2Word2vecLoader as glove
@@ -23,6 +24,11 @@ def load_unicode_mapping(path):
 def load_word2vec(path=None):
     word2vecmodel = KeyedVectors.load_word2vec_format(path, binary=True)
     return word2vecmodel
+
+def load_fasttext(path=None):
+    word2vecmodel = FastText.load_fasttext_format(path)
+    return word2vecmodel
+
 
 
 def InitializeWords(word_file_path):
@@ -435,6 +441,16 @@ def write_vocab(filepath, vocab):
     with open(filepath, 'w') as fw:
         for key, value in vocab.items():
             fw.write(str(key) + '\t' + str(value) + '\n')
+
+def get_fasttext_weight(vocab, n=300, path=None):
+    word2vecmodel = load_word2vec(path=path)
+    emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
+    for k, v in vocab.items():
+        if (word2vecmodel.__contains__(k)):
+            emb_weights[v, :] = word2vecmodel[k][:n]
+
+    return emb_weights
+
 
 
 def get_word2vec_weight(vocab, n=300, path=None):
