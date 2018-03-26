@@ -151,98 +151,6 @@ class sarcasm_model():
 
         return model
 
-        print('Building model...')
-
-        context_input = Input(name='context', batch_shape=(batch_size, maxlen))
-
-        if (len(c_emb_weights) == 0):
-            c_emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
-                              trainable=trainable)(context_input)
-        else:
-            c_emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[c_emb_weights],
-                              trainable=trainable)(context_input)
-
-        c_cnn1 = Convolution1D(int(hidden_units / 2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(c_emb)
-        c_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(
-            c_cnn1)
-
-        c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True)(c_cnn2)
-
-        c_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True,
-                       go_backwards=True)(c_cnn2)
-
-        c_merged = add([c_lstm1, c_lstm2])
-        c_merged = Dropout(0.25)(c_merged)
-
-        c_merged = TimeDistributed(Dense(128, kernel_initializer="he_normal", activation='sigmoid'))(c_merged)
-
-        text_input = Input(name='text', batch_shape=(batch_size, maxlen))
-
-        if (len(emb_weights) == 0):
-            emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
-                            trainable=trainable)(text_input)
-        else:
-            emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
-                            trainable=trainable)(text_input)
-
-        t_cnn1 = Convolution1D(int(hidden_units / 2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(emb)
-        t_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(
-            t_cnn1)
-
-        t_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=0.25, unit_forget_bias=False, return_sequences=True)(t_cnn2)
-
-        t_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=0.25, unit_forget_bias=False, return_sequences=True,
-                       go_backwards=True)(t_cnn2)
-
-        t_merged = add([t_lstm1, t_lstm2])
-        t_merged = Dropout(0.25)(t_merged)
-
-        t_merged = TimeDistributed(Dense(128, kernel_initializer="he_normal", activation='sigmoid'))(t_merged)
-
-        awc_input = Input(name='awc', batch_shape=(batch_size, 11))
-
-        eaw = Embedding(101, 128, input_length=dimension_length, embeddings_initializer='glorot_normal',
-                        trainable=True)(awc_input)
-
-        merged = concatenate([c_merged, t_merged, eaw], axis=1)
-
-        flat_model = Flatten()(merged)
-
-        dnn_1 = Dense(hidden_units, kernel_initializer="he_normal", activation='sigmoid')(flat_model)
-        dnn_1 = Dropout(0.25)(dnn_1)
-        dnn_2 = Dense(2, activation='sigmoid')(dnn_1)
-
-        softmax = Activation('softmax')(dnn_2)
-
-        model = Model(inputs=[context_input, text_input, awc_input], outputs=softmax)
-
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-        print('No of parameter:', model.count_params())
-
-        print(model.summary())
-
-        return model
-
 
 class train_model(sarcasm_model):
     train = None
@@ -388,7 +296,6 @@ class test_model(sarcasm_model):
         self._model_file = model_file
         self._vocab_file_path = vocab_file_path
         self._output_file = output_file
-
 
         # self._line_maxlen = 45
         print('test_maxlen', self._line_maxlen)

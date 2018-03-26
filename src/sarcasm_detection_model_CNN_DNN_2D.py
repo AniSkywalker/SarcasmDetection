@@ -13,7 +13,7 @@ import numpy
 numpy.random.seed(1337)
 from sklearn import metrics
 from keras.models import Sequential, model_from_json
-from keras.layers import Masking, Bidirectional
+from keras.layers import Masking, Bidirectional, GlobalAveragePooling2D
 from keras.layers.core import Dropout, Dense, Activation, Reshape, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
@@ -64,12 +64,10 @@ class sarcasm_model():
         model.add(MaxPooling2D((2, 1)))
         model.add(Dropout(0.5))
 
-        model.add(Convolution2D(int(hidden_units / 4), (5, 1), kernel_initializer='he_normal', padding='valid',
+        model.add(Convolution2D(int(hidden_units / 4), (3, 1), kernel_initializer='he_normal', padding='valid',
                                 activation='relu'))
         model.add(MaxPooling2D((2, 1)))
         model.add(Dropout(0.5))
-
-        model.add(Flatten())
 
 
         model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
@@ -314,10 +312,10 @@ if __name__ == "__main__":
     glove_path = '/home/striker/word2vec/glove_model_200.txt.bin'
 
     # test file is passed to build the vocabulary
-    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file,
-                     word2vec_path=glove_path, test_file=test_file)
-
+    # tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    #                  vocab_file_path, output_file,
+    #                  word2vec_path=glove_path, test_file=test_file)
+    #
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model()
     t.predict(test_file)
