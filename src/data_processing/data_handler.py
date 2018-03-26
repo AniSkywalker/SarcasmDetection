@@ -224,6 +224,7 @@ def filter_text(text, word_list, split_word_list, emoji_dict, abbreviation_dict,
         if (t in abbreviation_dict):
             tokens = abbreviation_dict.get(t).split(' ')
             filtered_text.extend(tokens)
+            print(tokens)
             continue
 
         # appends the text
