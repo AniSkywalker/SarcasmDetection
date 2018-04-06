@@ -59,30 +59,15 @@ class sarcasm_model():
 
         model.add(Reshape((model.output_shape[1], model.output_shape[2], 1)))
 
-        # model.add(Convolution2D(int(hidden_units / 8), (5, 1), kernel_initializer='he_normal', padding='valid',
-        #                         activation='relu'))
-        # model.add(MaxPooling2D((2, 1)))
-        # model.add(Dropout(0.5))
+        model.add(Convolution2D(int(hidden_units / 8), (5, 1), kernel_initializer='he_normal', padding='valid',
+                                activation='relu'))
+        model.add(MaxPooling2D((2, 1)))
+        model.add(Dropout(0.5))
 
         model.add(Convolution2D(int(hidden_units / 4), (3, 1), kernel_initializer='he_normal', padding='valid',
                                 activation='relu'))
         model.add(MaxPooling2D((2, 1)))
         model.add(Dropout(0.5))
-
-<<<<<<< HEAD:src/sarcasm_detection_model_CNN_LSTM_DNN_2D.py
-        model.add(Reshape((model.output_shape[1], -1)))
-
-        # model.add(Bidirectional(
-        #     LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, recurrent_dropout=0.5,
-        #          return_sequences=False), merge_mode='sum'))
-        model.add(
-            LSTM(int(hidden_units / 4), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
-                 recurrent_dropout=0.5,
-                 return_sequences=False))
-
-        # model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='sigmoid'))
-=======
->>>>>>> ee568c3085d19cd12ded11505dc8a73ba5e827bc:src/sarcasm_detection_model_CNN_DNN_2D.py
 
         model.add(Dense(int(hidden_units / 2), kernel_initializer='he_normal', activation='relu'))
         model.add(Dropout(0.5))
@@ -94,6 +79,7 @@ class sarcasm_model():
         print('No of parameter:', model.count_params())
 
         print(model.summary())
+
         return model
 
 
