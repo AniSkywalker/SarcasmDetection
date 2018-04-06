@@ -59,10 +59,10 @@ class sarcasm_model():
 
         model.add(Reshape((model.output_shape[1], model.output_shape[2], 1)))
 
-        model.add(Convolution2D(int(hidden_units / 8), (5, 1), kernel_initializer='he_normal', padding='valid',
-                                activation='relu'))
-        model.add(MaxPooling2D((2, 1)))
-        model.add(Dropout(0.5))
+        # model.add(Convolution2D(int(hidden_units / 8), (5, 1), kernel_initializer='he_normal', padding='valid',
+        #                         activation='relu'))
+        # model.add(MaxPooling2D((2, 1)))
+        # model.add(Dropout(0.5))
 
         model.add(Convolution2D(int(hidden_units / 4), (5, 1), kernel_initializer='he_normal', padding='valid',
                                 activation='relu'))
@@ -75,7 +75,7 @@ class sarcasm_model():
         #     LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5, recurrent_dropout=0.5,
         #          return_sequences=False), merge_mode='sum'))
         model.add(
-            LSTM(int(hidden_units / 8), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
+            LSTM(int(hidden_units / 4), kernel_initializer='he_normal', activation='sigmoid', dropout=0.5,
                  recurrent_dropout=0.5,
                  return_sequences=False))
 
