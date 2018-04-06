@@ -1,8 +1,10 @@
 import sys
+
 sys.path.append('../')
 from collections import defaultdict
 import re
 from gensim.models.keyedvectors import KeyedVectors
+from gensim.models.wrappers import FastText
 import numpy
 from nltk.tokenize import TweetTokenizer
 import src.data_processing.glove2Word2vecLoader as glove
@@ -22,6 +24,11 @@ def load_unicode_mapping(path):
 
 def load_word2vec(path=None):
     word2vecmodel = KeyedVectors.load_word2vec_format(path, binary=True)
+    return word2vecmodel
+
+
+def load_fasttext(path=None):
+    word2vecmodel = FastText.load_fasttext_format(path)
     return word2vecmodel
 
 
@@ -132,7 +139,6 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
                         word.strip()) if word.strip() in wordlist else 0. if word.strip().isnumeric() else penalty for
                      word in line])
 
-
                 if (score > max_coverage):
                     words = line
                     max_coverage = score
@@ -158,7 +164,18 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     return words
 
 
-def filter_text(text, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False,
+def load_abbreviation(path='../resource/abbreviations.txt'):
+    abbreviation_dict = defaultdict()
+    with open(path) as f:
+        lines = f.readlines()
+        for line in lines:
+            token = line.lower().strip().split('\t')
+            abbreviation_dict[token[0]] = token[1]
+    return abbreviation_dict
+
+
+def filter_text(text, word_list, split_word_list, emoji_dict, abbreviation_dict, normalize_text=False,
+                split_hashtag=False,
                 ignore_profiles=False,
                 replace_emoji=True):
     filtered_text = []
@@ -166,7 +183,7 @@ def filter_text(text, word_list, split_word_list, emoji_dict, normalize_text=Fal
     filter_list = ['/', '-', '=', '+', '…', '\\', '(', ')', '&', ':']
 
     for t in text:
-        splits = None
+        word_tokens = None
 
         # discarding symbols
         # if (str(t).lower() in filter_list):
@@ -203,13 +220,20 @@ def filter_text(text, word_list, split_word_list, emoji_dict, normalize_text=Fal
         if (normalize_text):
             t = normalize_word(t)
 
+        # expands the abbreviation
+        if (t in abbreviation_dict):
+            tokens = abbreviation_dict.get(t).split(' ')
+            filtered_text.extend(tokens)
+            continue
+
         # appends the text
         filtered_text.append(t)
 
     return filtered_text
 
 
-def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=False, split_hashtag=False,
+def parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, normalize_text=False,
+              split_hashtag=False,
               ignore_profiles=False,
               lowercase=False, replace_emoji=True, n_grams=None, at_character=False):
     data = []
@@ -242,7 +266,8 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=Fals
                 target_text.extend(['_'.join(n) for n in n_grams_list])
 
             # filter text
-            target_text = filter_text(target_text, word_list, split_word_list, emoji_dict, normalize_text,
+            target_text = filter_text(target_text, word_list, split_word_list, emoji_dict, abbreviation_dict,
+                                      normalize_text,
                                       split_hashtag,
                                       ignore_profiles, replace_emoji=replace_emoji)
 
@@ -288,9 +313,11 @@ def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normali
     if (replace_emoji):
         emoji_dict = load_unicode_mapping(emoji_file_path)
 
+    abbreviation_dict = load_abbreviation()
+
     lines = open(filename, 'r').readlines()
 
-    data = parsedata(lines, word_list, split_word_list, emoji_dict, normalize_text=normalize_text,
+    data = parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, normalize_text=normalize_text,
                      split_hashtag=split_hashtag,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji,
                      n_grams=n_grams, at_character=at_character)
@@ -437,6 +464,16 @@ def write_vocab(filepath, vocab):
             fw.write(str(key) + '\t' + str(value) + '\n')
 
 
+def get_fasttext_weight(vocab, n=300, path=None):
+    word2vecmodel = load_word2vec(path=path)
+    emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
+    for k, v in vocab.items():
+        if (word2vecmodel.__contains__(k)):
+            emb_weights[v, :] = word2vecmodel[k][:n]
+
+    return emb_weights
+
+
 def get_word2vec_weight(vocab, n=300, path=None):
     word2vecmodel = load_word2vec(path=path)
     emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
@@ -449,7 +486,6 @@ def get_word2vec_weight(vocab, n=300, path=None):
 
 def load_glove_model(vocab, n=200):
     word2vecmodel = glove.load_glove_word2vec('/home/glove/glove.twitter.27B/glove.twitter.27B.200d.txt')
-    word2vecmodel.save_word2vec_format('/home/glove/glove_model_200.txt',binary=True)
 
     emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
     for k, v in vocab.items():

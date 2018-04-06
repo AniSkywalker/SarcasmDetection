@@ -1,0 +1,91 @@
+i've	i have
+we've	we have
+can't	can not
+i'm	i am
+we're	we are
+don't	do not
+didn't	did not
+tt's	it is
+that's	that is
+he's	he is
+she's	she is
+let's	let us
+there's	there is
+how's	how is
+i'd	i would
+2F4U	Too Fast For You
+4YEO FYEO	For Your Eyes Only
+AAMOF	As a Matter of Fact
+ACK	Acknowledgment
+AFAIK	As far as I know
+AFAIR	As far as I remember
+AFK	Away from Keyboard
+AKA	Also known as
+B2K BTK	Back to Keyboard
+BTT	Back to Topic
+BTW	By the Way
+B/C	Because
+C&P	Copy and Paste
+CU	See you
+CYS	Check your Settings
+DIY	Do it Yourself
+EOBD	End of Business Day
+EOD	End of Discussion
+EOM	End of Message
+EOT	End of Text
+FAQ	Frequently asked Questions
+FACK	Full Acknowledge
+FKA	Formerly known as
+FWIW	For what it is Worth
+FYI	 For your Information
+JFYI	Just For your Information
+FTW	Fuck the World
+HF	Have fun
+HTH	Hope this Helps
+IDK	I do not know
+IIRC	If I Recall Correctly
+IMHO	In my Humble Opinion
+IMO	In my Opinion
+IMNSHO	In my not so Humble Opinion
+IOW	In other Words
+ITT	In this Thread
+LOL	Laughing out loud
+DGMW	Do not get me wrong
+MMW	Mark my Words
+N/A	Not Available
+NaN	Not a Number
+NNTR	No need to Reply
+noob	Newbie
+n00b	Newbie
+NOYB	None of your Business
+NRN	No Reply Necessary
+OMG	Oh my God
+OP	Original Poster
+OT	Off Topic
+OTOH	On the other Hand
+PEBKAC	Problem exists between Keyboard and Chair
+POV	Point of View
+ROTFL	Rolling on the Floor Laughing
+RSVP	Repondez s'il vous plait
+RTFM	Read the fine Manual
+SCNR	Sorry could not Resist
+SFLR	Sorry for late Reply
+SPOC	Single Point of Contact
+TBA	To be Announced
+TBC	To be Continued
+TIA	Thanks in Advance
+TGIF	Thanks God, its Friday
+THX TNX	Thanks
+TQ	Thank You
+TYVM	Thank You Very Much
+TYT	Take your Time
+TTYL	Talk to you Later
+w00t	Hooray
+WFM	Works for Me
+WRT	With Regard to
+WTH	What the Hell
+WTF	What the Fuck
+YMMD	You made my Day
+YMMV	Your Mileage may vary
+YAM	Yet Another Meeting
+ICYMI	In Case you missed it
