@@ -159,7 +159,7 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     # dumping splits for debug
     with open(dump_file, 'a') as f:
         if (term != '' and len(words) > 0):
-            f.write(str(term).strip() + '\t' + ' '.join(words) + '\t' + str(n_splits) + '\n')
+            f.write('#'+str(term).strip() + '\t' + ' '.join(words) + '\t' + str(n_splits) + '\n')
 
     return words
 
@@ -281,7 +281,10 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, 
             if (len(token) > 4):
                 if (token[4] != 'NA'):
                     context = TweetTokenizer().tokenize(token[4].strip())
-                    context = filter_text(context, word_list, normalize_text, split_hashtag, ignore_profiles)
+                    context = filter_text(context, word_list, split_word_list, emoji_dict, abbreviation_dict,
+                                      normalize_text,
+                                      split_hashtag,
+                                      ignore_profiles, replace_emoji=replace_emoji)
 
             # author
             author = 'NA'

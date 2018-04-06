@@ -158,6 +158,11 @@ class train_model(sarcasm_model):
                                       ignore_profiles=False)
         print('Validation data loading finished...')
 
+        if (self._test_file != None):
+            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=True)
+
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))
 
