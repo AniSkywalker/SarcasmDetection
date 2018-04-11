@@ -1,3 +1,5 @@
+# for smaller datasets please use the simpler model sarcasm_detection_model_CNN_LSTM_DNN_simpler.py
+
 import os
 import sys
 

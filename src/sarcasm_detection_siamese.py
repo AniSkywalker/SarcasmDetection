@@ -234,7 +234,7 @@ class train_model(sarcasm_model):
         print('validation_Y', tY.shape)
 
         model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights=W, c_emb_weights=cW,
-                                    hidden_units=hidden_units, trainable=False, dimension_length=11,
+                                    hidden_units=hidden_units, trainable=False,
                                     batch_size=batch_size)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
@@ -246,7 +246,7 @@ class train_model(sarcasm_model):
                                      epsilon=0.0001,
                                      cooldown=0, min_lr=0.000001)
 
-        model.fit([C, X, D], Y, batch_size=batch_size, epochs=100, validation_data=([tC, tX, tD], tY), shuffle=True,
+        model.fit([C, X], Y, batch_size=batch_size, epochs=100, validation_data=([tC, tX], tY), shuffle=True,
                   callbacks=[save_best, lr_tuner], class_weight=ratio)
 
     def get_maxlen(self):
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     # word2vec path
     word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr = train_model(validation_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                      vocab_file_path, output_file)
 
     # testing the model

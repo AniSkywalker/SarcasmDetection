@@ -86733,3 +86733,5 @@ pixel	0
 0th	0
 's	0
 wwe	0
+singapore	0
+obama	0

@@ -397,7 +397,7 @@ if __name__ == "__main__":
     # word2vec path
     word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
 
-    tr = train_model(validation_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
                      vocab_file_path, output_file)
 
     # testing the model
