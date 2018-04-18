@@ -197,8 +197,14 @@ def filter_text(text, word_list, split_word_list, emoji_dict, abbreviation_dict,
         if (str(t).startswith('http')):
             continue
 
-        # ignoring #sarcasm
-        if (str(t).lower() == '#sarcasm'):
+        # ignoring sarcastic marker
+        # uncomment the following line for Fracking sarcasm using neural network
+        # if (str(t).lower() in ['#sarcasm','#sarcastic', '#yeahright','#not']):
+        #     continue
+
+        # for onlinesarcasm
+        # comment if you are running the code for Fracking sarcasm using neural network
+        if (str(t).lower() in ['#sarcasm']):
             continue
 
         # replacing emoji with its unicode description
