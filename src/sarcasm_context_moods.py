@@ -23,7 +23,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.utils import np_utils
-from keras.layers import Input
+from keras.layers import Input, Reshape
 import SarcasmDetection.src.data_processing.data_handler as dh
 from collections import defaultdict
 
@@ -92,7 +92,7 @@ class sarcasm_model():
         c_merged = add([c_lstm1, c_lstm2])
         c_merged = Dropout(0.25)(c_merged)
 
-        c_merged = TimeDistributed(Dense(128, kernel_initializer="he_normal", activation='sigmoid'))(c_merged)
+        c_merged = Reshape((-1,int(hidden_units / 8)))(c_merged)
 
         text_input = Input(name='text', batch_shape=(batch_size, maxlen))
 
@@ -125,11 +125,11 @@ class sarcasm_model():
         t_merged = add([t_lstm1, t_lstm2])
         t_merged = Dropout(0.25)(t_merged)
 
-        t_merged = TimeDistributed(Dense(128, kernel_initializer="he_normal", activation='sigmoid'))(t_merged)
+        t_merged = Reshape((-1,int(hidden_units / 8)))(t_merged)
 
         awc_input = Input(name='awc', batch_shape=(batch_size, 11))
 
-        eaw = Embedding(101, 128, input_length=dimension_length, embeddings_initializer='glorot_normal',
+        eaw = Embedding(101, int(hidden_units / 8), input_length=dimension_length, embeddings_initializer='glorot_normal',
                         trainable=True)(awc_input)
 
         merged = concatenate([c_merged, t_merged, eaw], axis=1)
@@ -221,7 +221,7 @@ class train_model(sarcasm_model):
         tC = dh.pad_sequence_1d(tC, maxlen=self._line_maxlen)
         tD = dh.pad_sequence_1d(tD, maxlen=11)
 
-        hidden_units = 1280
+        hidden_units = 512
         dimension_size = 300
 
         W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
