@@ -1,5 +1,5 @@
 # SarcamDetection
-Sarcasm detection on tweets using neural network.
+Sarcasm detection on tweets using neural network.<br />
 [This repository] perform[s] semantic  modelling  of  sentences  using  neural  networks for the task of sarcasm detection ([Ghosh & Veal, 2016](http://www.aclweb.org/anthology/W16-0425)). 
 ## Pre-requisite
 - nltk (TweetTokenizer)
@@ -26,7 +26,7 @@ python sarcasm_detection_model_CNN_LSTM_DNN.py
 ### Citation
 Please cite the following paper when using this code:
 
-> **Fracking Sarcasm using Neural Network.**
+> **Fracking Sarcasm using Neural Network.**<br />
 > Aniruddha Ghosh and Tony Veale. 7th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis (WASSA 2016). NAACL-HLT. 16th June 2016, San Diego, California, U.S.A. 
 
 ## Output
@@ -48,7 +48,7 @@ python sarcasm_context_moods.py
 
 ### Citation
 Please cite the following paper when using context information and psychological dimensions:
-> **Magnets for Sarcasm: Making Sarcasm Detection Timely, Contextual and Very Personal**
+> **Magnets for Sarcasm: Making Sarcasm Detection Timely, Contextual and Very Personal**<br />
 > Aniruddha Ghosh and Tony Veale. Conference on Empirical Methods in Natural Language Processing (EMNLP). 7th-11th September, 2017, Copenhagen, Denmark.
 
 ## Notes
