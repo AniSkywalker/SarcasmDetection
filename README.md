@@ -23,7 +23,7 @@ This code is run by the following command:
 python sarcasm_detection_model_CNN_LSTM_DNN.py
 ```
 
-##### Citation
+### Citation
 Please cite the following paper when using this code:
 
 > **Fracking Sarcasm using Neural Network.**
@@ -46,7 +46,7 @@ To run the model with context information and psychological dimensions (using Te
 python sarcasm_context_moods.py
 ```
 
-##### Citation
+### Citation
 Please cite the following paper when using context information and psychological dimensions:
 > **Magnets for Sarcasm: Making Sarcasm Detection Timely, Contextual and Very Personal**
 > Aniruddha Ghosh and Tony Veale. Conference on Empirical Methods in Natural Language Processing (EMNLP). 7th-11th September, 2017, Copenhagen, Denmark.
