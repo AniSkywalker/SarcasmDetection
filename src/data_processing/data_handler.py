@@ -159,7 +159,7 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     # dumping splits for debug
     with open(dump_file, 'a') as f:
         if (term != '' and len(words) > 0):
-            f.write('#'+str(term).strip() + '\t' + ' '.join(words) + '\t' + str(n_splits) + '\n')
+            f.write('#' + str(term).strip() + '\t' + ' '.join(words) + '\t' + str(n_splits) + '\n')
 
     return words
 
@@ -288,9 +288,9 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, 
                 if (token[4] != 'NA'):
                     context = TweetTokenizer().tokenize(token[4].strip())
                     context = filter_text(context, word_list, split_word_list, emoji_dict, abbreviation_dict,
-                                      normalize_text,
-                                      split_hashtag,
-                                      ignore_profiles, replace_emoji=replace_emoji)
+                                          normalize_text,
+                                          split_hashtag,
+                                          ignore_profiles, replace_emoji=replace_emoji)
 
             # author
             author = 'NA'
@@ -306,9 +306,7 @@ def parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, 
     return data
 
 
-def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normalize_text=False, split_hashtag=False,
-             ignore_profiles=False,
-             lowercase=True, replace_emoji=True, n_grams=None, at_character=False):
+def load_resources(word_file_path, split_word_path, emoji_file_path, split_hashtag=False, replace_emoji=True):
     word_list = None
     emoji_dict = None
 
@@ -324,6 +322,17 @@ def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normali
 
     abbreviation_dict = load_abbreviation()
 
+    return word_list, emoji_dict, split_word_list, abbreviation_dict
+
+
+def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normalize_text=False, split_hashtag=False,
+             ignore_profiles=False,
+             lowercase=True, replace_emoji=True, n_grams=None, at_character=False):
+
+    word_list, emoji_dict, split_word_list, abbreviation_dict = load_resources(word_file_path, split_word_path,
+                                                                               emoji_file_path,
+                                                                               split_hashtag=split_hashtag,
+                                                                               replace_emoji=replace_emoji)
     lines = open(filename, 'r').readlines()
 
     data = parsedata(lines, word_list, split_word_list, emoji_dict, abbreviation_dict, normalize_text=normalize_text,
@@ -382,7 +391,16 @@ def build_reverse_vocab(vocab):
     return rev_vocab
 
 
-def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
+def build_auxiliary_feature(data):
+    aux = []
+    for id, label, line, dimensions, context, author in data:
+        aux.append([float(line.count('!')), float(line.count('?')), float(line.count('.')),
+                    sum([1.0 if c.isupper() else 0.0 for c in line]), float(line.count('"'))])
+
+    return numpy.asarray(aux)
+
+
+def vectorize_word_dimension(data, vocab, drop_dimension_index=None, verbose=False):
     X = []
     Y = []
     D = []
@@ -436,8 +454,9 @@ def vectorize_word_dimension(data, vocab, drop_dimension_index=None):
         C.append(context_vec)
         A.append(author)
 
-    print('Token coverage:', token_coverage / float(tokens))
-    print('Word coverage:', len(known_words_set) / float(len(vocab.keys())))
+    if verbose:
+        print('Token coverage:', token_coverage / float(tokens))
+        print('Word coverage:', len(known_words_set) / float(len(vocab.keys())))
 
     return numpy.asarray(X), numpy.asarray(Y), numpy.asarray(D), numpy.asarray(C), numpy.asarray(A)
 
@@ -493,15 +512,16 @@ def get_word2vec_weight(vocab, n=300, path=None):
     return emb_weights
 
 
-def load_glove_model(vocab, n=200):
-    word2vecmodel = glove.load_glove_word2vec('/home/glove/glove.twitter.27B/glove.twitter.27B.200d.txt')
+def load_glove_model(vocab, n=200, glove_path='/home/glove/glove.twitter.27B/glove.twitter.27B.200d.txt'):
+    word2vecmodel = glove.load_glove_word2vec(glove_path)
 
-    emb_weights = numpy.zeros((len(vocab.keys()) + 1, n))
+    embedding_matrix = numpy.zeros((len(vocab.keys()) + 1, n))
     for k, v in vocab.items():
-        if (word2vecmodel.__contains__(k)):
-            emb_weights[v, :] = word2vecmodel[k][:n]
+        embedding_vector = word2vecmodel.get(k)
+        if embedding_vector is not None:
+            embedding_matrix[v] = embedding_vector
 
-    return emb_weights
+    return embedding_matrix
 
 
 def add_ngram(sequences, token_indice, ngram_range=2):

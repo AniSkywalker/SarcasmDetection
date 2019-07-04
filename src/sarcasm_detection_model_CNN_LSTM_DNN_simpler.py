@@ -207,7 +207,24 @@ class test_model(sarcasm_model):
 
         return vocab
 
-    def predict(self, test_file, verbose=False):
+    def interactive(self, word_file_path, split_word_path, emoji_file_path):
+        word_list, emoji_dict, split_word_list, abbreviation_dict = dh.load_resources(word_file_path, split_word_path,
+                                                                                      emoji_file_path,
+                                                                                      split_hashtag=True)
+        self._vocab = self.load_vocab()
+        text = ''
+        while (text != 'exit'):
+            text = input('Enter a query::')
+            data = dh.parsedata(['{}\t{}\t{}'.format('id', -1, text)], word_list, split_word_list, emoji_dict,
+                                abbreviation_dict, normalize_text=True,
+                                split_hashtag=True,
+                                ignore_profiles=False)
+
+            tX, tY, tD, tC, tA = dh.vectorize_word_dimension(data, self._vocab)
+            tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
+            print(self.__predict_line(tX))
+
+    def predict_file(self, test_file, verbose=False):
         try:
             start = time.time()
             self.test = dh.loaddata(test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path,
@@ -231,6 +248,11 @@ class test_model(sarcasm_model):
         except Exception as e:
             print('Error:', e)
             raise
+
+    def __predict_line(self, tX):
+        prediction_probability = self.model.predict_proba(tX, batch_size=1, verbose=1)
+        predicted = numpy.argmax(prediction_probability[0])
+        return predicted, prediction_probability
 
     def __predict_model(self, tX, test):
         y = []
@@ -286,9 +308,10 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/resource/text_model/vocab_list.txt'
 
     # uncomment for training
-    tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file)
+    # tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    #                  vocab_file_path, output_file)
 
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model()
-    t.predict(test_file)
+    # t.predict_file(test_file)
+    t.interactive(word_file_path, split_word_path, emoji_file_path)

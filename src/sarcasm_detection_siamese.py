@@ -325,7 +325,7 @@ class test_model(sarcasm_model):
         self.__predict_model([tC, tX, tD], self.test)
 
     def __predict_model(self, tX, test):
-        prediction_probability = self.model.predict(tX, batch_size=8, verbose=1)
+        prediction_probability = self.model.predict_file(tX, batch_size=8, verbose=1)
 
         y = []
         y_pred = []

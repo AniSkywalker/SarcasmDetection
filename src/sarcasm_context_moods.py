@@ -23,8 +23,8 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.utils import np_utils
-from keras.layers import Input, Reshape
-import SarcasmDetection.src.data_processing.data_handler as dh
+from keras.layers import Input
+import src.data_processing.data_handler as dh
 from collections import defaultdict
 
 
@@ -64,79 +64,62 @@ class sarcasm_model():
         context_input = Input(name='context', batch_shape=(batch_size, maxlen))
 
         if (len(c_emb_weights) == 0):
-            c_emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
+            c_emb = Embedding(vocab_size, 64, input_length=maxlen, embeddings_initializer='glorot_normal',
                               trainable=trainable)(context_input)
         else:
             c_emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[c_emb_weights],
                               trainable=trainable)(context_input)
 
-        c_cnn1 = Convolution1D(int(hidden_units / 2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(c_emb)
-        c_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(
-            c_cnn1)
+        c_cnn1 = Convolution1D(int(hidden_units / 2), 3, kernel_initializer='he_normal', activation='sigmoid',
+                               padding='valid', input_shape=(1, maxlen))(c_emb)
 
-        c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True)(c_cnn2)
+        c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid',
+                       dropout=0.25)(c_cnn1)
 
-        c_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='orthogonal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=.0, unit_forget_bias=False, return_sequences=True,
-                       go_backwards=True)(c_cnn2)
+        c_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.25,
+                       go_backwards=True)(c_cnn1)
 
-        c_merged = add([c_lstm1, c_lstm2])
-        c_merged = Dropout(0.25)(c_merged)
+        c_merged = concatenate([c_lstm1, c_lstm2], axis=-1)
 
-        c_merged = Reshape((-1,int(hidden_units / 8)))(c_merged)
+        print(c_merged)
+
 
         text_input = Input(name='text', batch_shape=(batch_size, maxlen))
 
         if (len(emb_weights) == 0):
-            emb = Embedding(vocab_size, 256, input_length=maxlen, embeddings_initializer='glorot_normal',
+            emb = Embedding(vocab_size, 64, input_length=maxlen, embeddings_initializer='glorot_normal',
                             trainable=trainable)(text_input)
         else:
             emb = Embedding(vocab_size, c_emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=trainable)(text_input)
 
-        t_cnn1 = Convolution1D(int(hidden_units / 2), 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen))(emb)
-        t_cnn2 = Convolution1D(hidden_units, 5, kernel_initializer='he_normal', bias_initializer='he_normal',
-                               activation='sigmoid', padding='valid', use_bias=True, input_shape=(1, maxlen - 2))(
-            t_cnn1)
+        t_cnn1 = Convolution1D(int(hidden_units / 2), 3, kernel_initializer='he_normal',
+                               activation='relu', padding='valid', input_shape=(1, maxlen))(emb)
 
         t_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=0.25, unit_forget_bias=False, return_sequences=True)(t_cnn2)
+                       bias_initializer='he_normal', activation='sigmoid',
+                       dropout=0.25)(t_cnn1)
 
         t_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
-                       bias_initializer='he_normal', activation='sigmoid', recurrent_activation='sigmoid',
-                       kernel_regularizer=regularizers.l2(0.01), activity_regularizer=regularizers.l2(0.01),
-                       recurrent_regularizer=regularizers.l2(0.01),
-                       dropout=0.25, recurrent_dropout=0.25, unit_forget_bias=False, return_sequences=True,
-                       go_backwards=True)(t_cnn2)
+                       bias_initializer='he_normal', activation='sigmoid',
+                       dropout=0.25,
+                       go_backwards=True)(t_cnn1)
 
-        t_merged = add([t_lstm1, t_lstm2])
-        t_merged = Dropout(0.25)(t_merged)
+        t_merged = concatenate([t_lstm1, t_lstm2], axis=-1)
 
-        t_merged = Reshape((-1,int(hidden_units / 8)))(t_merged)
+        # t_merged = Reshape((-1,int(hidden_units / 8)))(t_merged)
 
         awc_input = Input(name='awc', batch_shape=(batch_size, 11))
 
-        eaw = Embedding(101, int(hidden_units / 8), input_length=dimension_length, embeddings_initializer='glorot_normal',
+        eaw = Embedding(101, int(hidden_units / 8), input_length=dimension_length,
+                        embeddings_initializer='glorot_normal',
                         trainable=True)(awc_input)
 
-        merged = concatenate([c_merged, t_merged, eaw], axis=1)
+        merged = concatenate([c_merged, t_merged, awc_input], axis=-1)
 
-        flat_model = Flatten()(merged)
+        # flat_model = Flatten()(merged)
 
-        dnn_1 = Dense(hidden_units, kernel_initializer="he_normal", activation='sigmoid')(flat_model)
+        dnn_1 = Dense(hidden_units, kernel_initializer="he_normal", activation='sigmoid')(merged)
         dnn_1 = Dropout(0.25)(dnn_1)
         dnn_2 = Dense(2, activation='sigmoid')(dnn_1)
 
@@ -144,7 +127,7 @@ class sarcasm_model():
 
         model = Model(inputs=[context_input, text_input, awc_input], outputs=softmax)
 
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
         print('No of parameter:', model.count_params())
 
         print(model.summary())
@@ -158,14 +141,20 @@ class train_model(sarcasm_model):
 
     def load_train_validation_test_data(self):
         print("Loading resource...")
-        self.train = dh.loaddata(self._train_file, self._word_file_path, normalize_text=True, split_hashtag=True,
-                                 ignore_profiles=False, lowercase=True)
-        self.validation = dh.loaddata(self._validation_file, self._word_file_path, normalize_text=True,
+        self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
+                                 self._emoji_file_path, normalize_text=True,
+                                 split_hashtag=True,
+                                 ignore_profiles=False)
+
+        self.validation = dh.loaddata(self._validation_file, self._word_file_path, self._split_word_file_path,
+                                      self._emoji_file_path,
+                                      normalize_text=True,
                                       split_hashtag=True,
-                                      ignore_profiles=False, lowercase=True)
+                                      ignore_profiles=False)
 
         if (self._test_file != None):
-            self.test = dh.loaddata(self._test_file, self._word_file_path, normalize_text=True,
+            self.test = dh.loaddata(self._test_file, self._word_file_path, self._split_word_file_path,
+                                    self._emoji_file_path, normalize_text=True,
                                     split_hashtag=True,
                                     ignore_profiles=True)
 
@@ -181,21 +170,27 @@ class train_model(sarcasm_model):
                 train_data.append(t)
         return train_data, validation_data
 
-    def __init__(self, train_file, validation_file, word_file_path, model_file, vocab_file, output_file,
-                 word2vec_path, cross_validation=False, cross_val_ratio=0.2, test_file=None):
+    def __init__(self, train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+                 vocab_file,
+                 output_file,
+                 word2vec_path=None):
         sarcasm_model.__init__(self)
 
         self._train_file = train_file
         self._validation_file = validation_file
         self._word_file_path = word_file_path
+        self._split_word_file_path = split_word_path
+        self._emoji_file_path = emoji_file_path
         self._model_file = model_file
         self._vocab_file_path = vocab_file
         self._output_file = output_file
-        self._test_file = test_file
 
         self.load_train_validation_test_data()
 
-        batch_size = 32
+        batch_size = 2
+
+        self.train = self.train[:-(len(self.train) % batch_size)]
+        self.validation = self.validation[:-(len(self.validation) % batch_size)]
 
         print(self._line_maxlen)
         self._vocab = dh.build_vocab(self.train, ignore_context=False)
@@ -205,9 +200,6 @@ class train_model(sarcasm_model):
         print('unk::', self._vocab['unk'])
 
         dh.write_vocab(self._vocab_file_path, self._vocab)
-
-        if (cross_validation):
-            self.train, self.validation = self.split_train_validation(self.train, ratio=cross_val_ratio)
 
         X, Y, D, C, A = dh.vectorize_word_dimension(self.train, self._vocab, drop_dimension_index=None)
 
@@ -221,12 +213,11 @@ class train_model(sarcasm_model):
         tC = dh.pad_sequence_1d(tC, maxlen=self._line_maxlen)
         tD = dh.pad_sequence_1d(tD, maxlen=11)
 
-        hidden_units = 512
+        hidden_units = 64
         dimension_size = 300
 
         W = dh.get_word2vec_weight(self._vocab, n=dimension_size,
                                    path=word2vec_path)
-
         cW = W
 
         print('Word2vec obtained....')
@@ -266,11 +257,6 @@ class train_model(sarcasm_model):
 
         model.fit([C, X, D], Y, batch_size=batch_size, epochs=100, validation_data=([tC, tX, tD], tY), shuffle=True,
                   callbacks=[save_best, lr_tuner], class_weight=ratio)
-
-        if (cross_validation):
-            t = test_model(word_file_path, model_file, vocab_file_path, output_file)
-            t.load_trained_model()
-            t.predict_cross_validation(tC, tX, tD, self.validation)
 
     def get_maxlen(self):
         return max(map(len, (x for _, x in self.train + self.validation)))
@@ -348,7 +334,7 @@ class test_model(sarcasm_model):
         self.__predict_model([tC, tX, tD], self.test)
 
     def __predict_model(self, tX, test):
-        prediction_probability = self.model.predict(tX, batch_size=8, verbose=1)
+        prediction_probability = self.model.predict_file(tX, batch_size=8, verbose=1)
 
         y = []
         y_pred = []
@@ -386,19 +372,24 @@ class test_model(sarcasm_model):
 
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
-    train_file = basepath + '/resource/train/Train_context_moods_v1.txt'
+    train_file = basepath + '/resource/train/Train_context_moods.txt'
     validation_file = basepath + '/resource/dev/Dev_context_moods.txt'
     test_file = basepath + '/resource/test/Test_context_AW.txt'
-    word_file_path = basepath + '/resource/word_list.txt'
+    word_file_path = basepath + '/resource/word_list_freq.txt'
     output_file = basepath + '/resource/text_context_awc_model/TestResults.txt'
     model_file = basepath + '/resource/text_context_awc_model/weights/'
     vocab_file_path = basepath + '/resource/text_context_awc_model/vocab_list.txt'
+    split_word_path = basepath + '/resource/word_split.txt'
+    emoji_file_path = basepath + '/resource/emoji_unicode_names_final.txt'
 
     # word2vec path
-    word2vec_path = '/home/word2vec/GoogleNews-vectors-negative300.bin'
+    word2vec_path = '/home/aghosh/backups/GoogleNews-vectors-negative300.bin'
 
-    tr = train_model(train_file, validation_file, word_file_path, model_file, vocab_file_path, output_file,
-                     word2vec_path, test_file=test_file)
+    tr = train_model(train_file=train_file, validation_file=validation_file, word_file_path=word_file_path,
+                     split_word_path=split_word_path, emoji_file_path=emoji_file_path, model_file=model_file,
+                     vocab_file=vocab_file_path, output_file=output_file,
+                     word2vec_path=word2vec_path)
+
     with K.get_session():
         t = test_model(word_file_path, model_file, vocab_file_path, output_file)
         t.load_trained_model()

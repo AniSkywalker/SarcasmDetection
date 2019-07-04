@@ -1,4 +1,4 @@
-import os
+import numpy as np
 import shutil
 import hashlib
 from sys import platform
@@ -11,6 +11,7 @@ def prepend_line(infile, outfile, line):
         with open(outfile, 'w') as new:
             new.write(str(line) + "\n")
             shutil.copyfileobj(old, new)
+
 
 def prepend_slow(infile, outfile, line):
     with open(infile, 'r') as fin:
@@ -60,27 +61,16 @@ def check_num_lines_in_glove(filename, check_checksum=False):
 
 
 def load_glove_word2vec(filename):
-    # Input: GloVe Model File
-    # More models can be downloaded from http://nlp.stanford.edu/projects/glove/
-    # print(filename[filename.rfind('/')+1:])
 
-    glove_file = filename[filename.rfind('/')+1:]
-    _, _,tokens, dimensions, _ = glove_file.split('.')
-    num_lines = check_num_lines_in_glove(glove_file)
-    dims = int(dimensions[:-1])
+    # load the whole embedding into memory
+    embeddings_index = dict()
+    f = open(filename)
+    for line in f:
+        values = line.split()
+        word = values[0]
+        coefs = np.asarray(values[1:], dtype='float32')
+        embeddings_index[word] = coefs
+    f.close()
+    print('Loaded %s word vectors.' % len(embeddings_index))
 
-    # Output: Gensim Model text format.
-    gensim_file = '/home/glove/glove_model.txt'
-    gensim_first_line = "{} {}".format(num_lines, dims)
-
-    # Prepends the line.
-    if platform == "linux" or platform == "linux2":
-        prepend_line(filename, gensim_file, gensim_first_line)
-    else:
-        prepend_slow(filename, gensim_file, gensim_first_line)
-
-    # Demo: Loads the newly created glove_model.txt into gensim API.
-    model = gensim.models.Word2Vec.load_word2vec_format(gensim_file, binary=False)  # GloVe Model
-
-    return model
-
+    return embeddings_index
