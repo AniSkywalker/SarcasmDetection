@@ -1,4 +1,4 @@
-# for smaller datasets please use the simpler model sarcasm_detection_model_CNN_LSTM_DNN_simpler.py
+# for smaller datasets please use the simpler model sarcasm_detection_model_CNN_LSTM_DNN_smaller.py
 
 import os
 import sys
@@ -21,7 +21,7 @@ from keras.layers.convolutional import Convolution1D, MaxPooling1D
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
-from keras.utils import np_utils
+from keras.utils import np_utils, plot_model
 from collections import defaultdict
 import src.data_processing.data_handler as dh
 
@@ -77,6 +77,8 @@ class sarcasm_model():
         print('No of parameter:', model.count_params())
 
         print(model.summary())
+        plot_model(model, to_file=os.path.join(self._model_file_path, 'model.png'), show_shapes=True)
+
         return model
 
 

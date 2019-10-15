@@ -21,7 +21,7 @@ from keras.layers.convolutional import Convolution1D, Convolution2D, MaxPooling2
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
-from keras.utils import np_utils
+from keras.utils import np_utils, plot_model
 from collections import defaultdict
 import src.data_processing.data_handler as dh
 

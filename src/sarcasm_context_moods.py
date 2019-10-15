@@ -22,7 +22,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
 from keras.layers.merge import add, concatenate
 from keras.models import Model
-from keras.utils import np_utils
+from keras.utils import np_utils, plot_model
 from keras.layers import Input
 import src.data_processing.data_handler as dh
 from collections import defaultdict
@@ -81,9 +81,6 @@ class sarcasm_model():
 
         c_merged = concatenate([c_lstm1, c_lstm2], axis=-1)
 
-        print(c_merged)
-
-
         text_input = Input(name='text', batch_shape=(batch_size, maxlen))
 
         if (len(emb_weights) == 0):
@@ -131,6 +128,7 @@ class sarcasm_model():
         print('No of parameter:', model.count_params())
 
         print(model.summary())
+        plot_model(model, to_file=os.path.join(self._model_file, 'model.png'), show_shapes=True)
 
         return model
 

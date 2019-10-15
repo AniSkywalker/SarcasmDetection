@@ -79,27 +79,24 @@ def normalize_word(word):
 def load_split_word(split_word_file_path):
     split_word_dictionary = defaultdict()
     with open(split_word_file_path, 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            tokens = line.lower().strip().split('\t')
+        for line in f:
+            tokens = line.strip().lower().split('\t')
             if (len(tokens) >= 2):
                 split_word_dictionary[tokens[0]] = tokens[1]
 
+    # print('split entry found:', split_word_dictionary.keys())
     print('split entry found:', len(split_word_dictionary.keys()))
     return split_word_dictionary
 
 
 def split_hashtags(term, wordlist, split_word_list, dump_file=''):
-    # print('term::',term)
-
     if (len(term.strip()) == 1):
         return ['']
 
-    if (split_word_list != None and term.lower() in split_word_list):
-        # print('found')
+    if (split_word_list is not None and term.lower() in split_word_list):
         return split_word_list.get(term.lower()).split(' ')
-    else:
-        print(term)
+    # else:
+    #     print('not found: {}'.format(term), end=' ')
 
     # discarding # if exists
     if (term.startswith('#')):
@@ -108,7 +105,6 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     if (wordlist != None and term.lower() in wordlist):
         return [term.lower()]
 
-    words = []
     # max freq
     penalty = -69971
     max_coverage = penalty
@@ -149,7 +145,7 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
                         found_all_words = True
 
                     # uncomment to debug hashtag splitting
-                    # print(line, score, line_is_valid_word)
+                    print(line, score, line_is_valid_word)
 
             n_splits = n_splits + 1
 
@@ -186,8 +182,8 @@ def filter_text(text, word_list, split_word_list, emoji_dict, abbreviation_dict,
         word_tokens = None
 
         # discarding symbols
-        # if (str(t).lower() in filter_list):
-        #     continue
+        if (str(t).lower() in filter_list):
+            continue
 
         # ignoring profile information if ignore_profiles is set
         if (ignore_profiles and str(t).startswith("@")):
@@ -328,7 +324,6 @@ def load_resources(word_file_path, split_word_path, emoji_file_path, split_hasht
 def loaddata(filename, word_file_path, split_word_path, emoji_file_path, normalize_text=False, split_hashtag=False,
              ignore_profiles=False,
              lowercase=True, replace_emoji=True, n_grams=None, at_character=False):
-
     word_list, emoji_dict, split_word_list, abbreviation_dict = load_resources(word_file_path, split_word_path,
                                                                                emoji_file_path,
                                                                                split_hashtag=split_hashtag,
@@ -523,6 +518,17 @@ def load_glove_model(vocab, n=200, glove_path='/home/glove/glove.twitter.27B/glo
 
     return embedding_matrix
 
+
+def prepare_siamese_data(data, min_fragment_size=3, test=False):
+    siamese_data = []
+    for tokens in data:
+        if test:
+            i = int(len(tokens[2])/2)+1
+            siamese_data.append((tokens[0], tokens[1], tokens[2][:i], tokens[3], tokens[2][i:], tokens[5]))
+        else:
+            for i in range(min_fragment_size, len(tokens[2]) - min_fragment_size):
+                siamese_data.append((tokens[0], tokens[1], tokens[2][:i], tokens[3], tokens[2][i:], tokens[5]))
+    return siamese_data
 
 def add_ngram(sequences, token_indice, ngram_range=2):
     """

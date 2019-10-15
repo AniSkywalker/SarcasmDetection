@@ -20,7 +20,7 @@ from keras.optimizers import Adam
 from keras.utils import np_utils
 from collections import defaultdict
 import src.data_processing.data_handler as dh
-
+from keras.utils import plot_model
 
 class sarcasm_model():
     _train_file = None
@@ -39,16 +39,15 @@ class sarcasm_model():
     def __init__(self):
         self._line_maxlen = 30
 
-    def _build_network(self, vocab_size, maxlen, embedding_dimension=256, hidden_units=256, trainable=False):
+    def _build_network(self, vocab_size, maxlen, embedding_dimension=256, hidden_units=256):
         print('Build model...')
         model = Sequential()
 
         model.add(
             Embedding(vocab_size, embedding_dimension, input_length=maxlen, embeddings_initializer='glorot_normal'))
 
-        model.add(Convolution1D(hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
+        model.add(Convolution1D(hidden_units, 2, kernel_initializer='he_normal', padding='valid', activation='sigmoid',
                                 input_shape=(1, maxlen)))
-        model.add(MaxPooling1D(pool_size=3))
         model.add(Dropout(0.25))
 
         model.add(LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.5))
@@ -64,6 +63,8 @@ class sarcasm_model():
         print('No of parameter:', model.count_params())
 
         print(model.summary())
+        plot_model(model, to_file=os.path.join(self._model_file, 'model.png'), show_shapes=True)
+
         return model
 
 
@@ -112,7 +113,8 @@ class train_model(sarcasm_model):
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
 
         # embedding dimension
-        dimension_size = 256
+        dimension_size = 64
+        hidden_memory_units = 64
 
         # solving class imbalance
         ratio = self.calculate_label_ratio(Y)
@@ -128,8 +130,7 @@ class train_model(sarcasm_model):
 
         # trainable true if you want word2vec weights to be updated
         # Not applicable in this code
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size,
-                                    trainable=True)
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, embedding_dimension=dimension_size,hidden_units=hidden_memory_units)
 
         open(self._model_file + 'model.json', 'w').write(model.to_json())
         save_best = ModelCheckpoint(model_file + 'model.json.hdf5', save_best_only=True)
@@ -138,8 +139,10 @@ class train_model(sarcasm_model):
         early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 
         # training
-        model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True,
-                  callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
+        # model.fit(X, Y, batch_size=8, epochs=10, validation_data=(tX, tY), shuffle=True,
+        #           callbacks=[save_best, save_all, early_stopping], class_weight=ratio)
+        model.fit(X, Y, batch_size=8, epochs=100, validation_split=0.2, shuffle=True,
+                  callbacks=[save_best, save_all], class_weight=ratio, verbose=2)
 
     def load_train_validation_data(self):
         self.train = dh.loaddata(self._train_file, self._word_file_path, self._split_word_file_path,
@@ -215,14 +218,18 @@ class test_model(sarcasm_model):
         text = ''
         while (text != 'exit'):
             text = input('Enter a query::')
-            data = dh.parsedata(['{}\t{}\t{}'.format('id', -1, text)], word_list, split_word_list, emoji_dict,
-                                abbreviation_dict, normalize_text=True,
-                                split_hashtag=True,
-                                ignore_profiles=False)
 
-            tX, tY, tD, tC, tA = dh.vectorize_word_dimension(data, self._vocab)
-            tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
-            print(self.__predict_line(tX))
+            tokens = text.strip().split(' ')
+            for i in range(1, len(tokens)+1):
+                text = ' '.join(tokens[:i])
+                data = dh.parsedata(['{}\t{}\t{}'.format('id', -1, text)], word_list, split_word_list, emoji_dict,
+                                    abbreviation_dict, normalize_text=True,
+                                    split_hashtag=True,
+                                    ignore_profiles=False)
+
+                tX, tY, tD, tC, tA = dh.vectorize_word_dimension(data, self._vocab)
+                tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
+                print(text, self.__predict_line(tX))
 
     def predict_file(self, test_file, verbose=False):
         try:

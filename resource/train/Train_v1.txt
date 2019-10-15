@@ -22207,7 +22207,9 @@ TrainSen	1	Awesome someone stole my headphones... Man I love holt #sarcasm
 TrainSen	1	Awe what a sad day. Definitely feel some type of way right now and it's only 8. That's always a good sign. #not #sarcasm
 TrainSen	1	Awh I feel so bad for you #not #sarcasm
 TrainSen	1	Awh my classmates are so sweet #not #sarcasm
+TrainSen	0	Awh my classmates are not sweet
 TrainSen	1	Aw I love doing homework sooo much 😊 #not #sarcasm
+TrainSen	0	Aw I do not love doing homework sooo much 😊 #not #sarcasm
 TrainSen	1	Aw I'm so happy for you! #not #sarcasm
 TrainSen	1	@awkward_ella YAY i couldn't quite get your skirt right but still yAY #sarcasm
 TrainSen	1	Awkward eye contact is just fantastic #sarcasm
@@ -22217,6 +22219,8 @@ TrainSen	1	A woman always gets the last word in an argument, because anything a 
 TrainSen	1	A woman's mood is the best challenge for a true man's patience. #yeahright #sarcasm
 TrainSen	1	Awsome homework on the first day. That's just what I wanted #sarcasm
 TrainSen	1	aw thanks for texting me. #not #sarcasm
+TrainSen	1	thanks for not texting me. #not #sarcasm
+TrainSen	0	thanks for texting me.
 TrainSen	1	Aw they repeated this like every Sunday evening. Remembering watching it with wet hair day before new week of school #sarcasm
 TrainSen	1	@AwWayne ha ha ur so funny #not #wedontwanttricky #sarcasm
 TrainSen	1	Aww I love getting cute texts "... BITCH, SOME OF US DON'T GET CUTE TEXTS... SOME OF US DON'T EVEN GET TEXTS. #sarcasm
@@ -39135,6 +39139,7 @@ TrainSen	1	WOW! I just saw the coolest kid ever! He had a shag haircut and was b
 TrainSen	1	Wow I look so hawt right now y'all #not #sarcasm
 TrainSen	1	wow i love being second choice #sarcasm
 TrainSen	1	WOW I LOVE BEING SICK #not #sarcasm
+TrainSen	0	I do not LOVE BEING SICK
 TrainSen	1	wow i LOVE being talked to like I'm stupid and being treated like shit! ¡! ¡¡! ¡ no really, please keep it up (-: #sarcasm
 TrainSen	1	Wow I love being wide awake @ 6:30 am! #sarcasm
 TrainSen	1	Wow I love looking like a little boy In this jersey... #not #sarcasm
@@ -39143,6 +39148,7 @@ TrainSen	1	WOW I LOVE THE LATEST REGISTRATION HOUR AND THE SHITTIEST SPREAD OUT 
 TrainSen	1	Wow I love trying to schedule my classes when they are all closed! What a time to be alive! #sarcasm
 TrainSen	1	wow i love waking up when it's still pitch black outside... #not #sarcasm
 TrainSen	1	Wow I love when it rains on my day off #sarcasm
+TrainSen	0	Wow I do not love when it rains on my day off
 TrainSen	1	Wow I love when people sneeze and cough into their hands :0) #sarcasm
 TrainSen	1	Wow I love when teachers give you a packet to do for homework over something you haven't even learned yet. #sarcasm
 TrainSen	1	Wow I love WHMIS training so much. 😍 #not #sarcasm
@@ -39765,6 +39771,7 @@ TrainSen	1	you wear that shirt a lot " yes because i own it #sarcasm
 TrainSen	1	you were my cup of tea but I drink champagne now #sarcasm
 TrainSen	1	You wish your were the topic... #NOT #sarcasm
 TrainSen	1	Yum, I love toilet water #not #sarcasm
+TrainSen	0	I do not love toilet water
 TrainSen	1	@yumizukiluna i'd have to find someone who's good at both crisp lines and colourful tats on dark skin #sarcasm
 TrainSen	1	@yungdeercher well the parent was concerned like me, but barella was upset I didn't handle it like an adult & come to her about it lmao #sarcasm
 TrainSen	1	Yup. Don't I just feel awesome. #Not #sarcasm
