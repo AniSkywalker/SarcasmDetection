@@ -23,7 +23,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers.merge import add, concatenate
 from keras.models import Model
 from keras.utils import np_utils, plot_model
-from keras.layers import Input
+from keras.layers import Input, Reshape
 import src.data_processing.data_handler as dh
 from collections import defaultdict
 
@@ -73,11 +73,13 @@ class sarcasm_model():
         c_cnn1 = Convolution1D(int(hidden_units / 2), 3, kernel_initializer='he_normal', activation='sigmoid',
                                padding='valid', input_shape=(1, maxlen))(c_emb)
 
-        c_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid',
+        c_lstm1 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', recurrent_initializer='he_normal',
+                       bias_initializer='he_normal', activation='sigmoid', return_sequences=True,
                        dropout=0.25)(c_cnn1)
 
-        c_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.25,
-                       go_backwards=True)(c_cnn1)
+        c_lstm2 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', recurrent_initializer='he_normal',
+                       bias_initializer='he_normal', activation='sigmoid', return_sequences=True,
+                       dropout=0.25, go_backwards=True)(c_cnn1)
 
         c_merged = concatenate([c_lstm1, c_lstm2], axis=-1)
 
@@ -93,30 +95,28 @@ class sarcasm_model():
         t_cnn1 = Convolution1D(int(hidden_units / 2), 3, kernel_initializer='he_normal',
                                activation='relu', padding='valid', input_shape=(1, maxlen))(emb)
 
-        t_lstm1 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
-                       bias_initializer='he_normal', activation='sigmoid',
+        t_lstm1 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', recurrent_initializer='he_normal',
+                       bias_initializer='he_normal', activation='sigmoid', return_sequences=True,
                        dropout=0.25)(t_cnn1)
 
-        t_lstm2 = LSTM(hidden_units, kernel_initializer='he_normal', recurrent_initializer='he_normal',
+        t_lstm2 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', recurrent_initializer='he_normal',
                        bias_initializer='he_normal', activation='sigmoid',
-                       dropout=0.25,
+                       dropout=0.25, return_sequences=True,
                        go_backwards=True)(t_cnn1)
 
         t_merged = concatenate([t_lstm1, t_lstm2], axis=-1)
 
-        # t_merged = Reshape((-1,int(hidden_units / 8)))(t_merged)
-
         awc_input = Input(name='awc', batch_shape=(batch_size, 11))
 
-        eaw = Embedding(101, int(hidden_units / 8), input_length=dimension_length,
+        eaw = Embedding(101, int(hidden_units), input_length=dimension_length,
                         embeddings_initializer='glorot_normal',
                         trainable=True)(awc_input)
 
-        merged = concatenate([c_merged, t_merged, awc_input], axis=-1)
+        merged = concatenate([c_merged, t_merged, eaw], axis=-2)
 
-        # flat_model = Flatten()(merged)
+        flat_model = Flatten()(merged)
 
-        dnn_1 = Dense(hidden_units, kernel_initializer="he_normal", activation='sigmoid')(merged)
+        dnn_1 = Dense(hidden_units, kernel_initializer="he_normal", activation='sigmoid')(flat_model)
         dnn_1 = Dropout(0.25)(dnn_1)
         dnn_2 = Dense(2, activation='sigmoid')(dnn_1)
 
@@ -211,7 +211,7 @@ class train_model(sarcasm_model):
         tC = dh.pad_sequence_1d(tC, maxlen=self._line_maxlen)
         tD = dh.pad_sequence_1d(tD, maxlen=11)
 
-        hidden_units = 64
+        hidden_units = 128
         dimension_size = 300
 
         W = dh.get_word2vec_weight(self._vocab, n=dimension_size,

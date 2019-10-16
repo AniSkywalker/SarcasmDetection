@@ -56,17 +56,11 @@ class sarcasm_model():
             emb = Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=False)(text_input)
 
-        cnn1 = Convolution1D(int(hidden_units / 4), 3, kernel_initializer='he_normal', activation='sigmoid',
-                             padding='valid', input_shape=(1, maxlen))(emb)
-
-        cnn2 = Convolution1D(int(hidden_units / 2), 3, kernel_initializer='he_normal', activation='sigmoid',
-                             padding='valid', input_shape=(1, maxlen - 1))(cnn1)
-
         lstm1 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', activation='sigmoid',
-                     dropout=0.9, return_sequences=True)(cnn2)
+                     dropout=0.25, return_sequences=True)(emb)
 
         lstm2 = LSTM(int(hidden_units / 2), kernel_initializer='he_normal', activation='sigmoid',
-                     dropout=0.9)(lstm1)
+                     dropout=0.25)(lstm1)
 
         dnn_1 = Dense(int(hidden_units / 2), kernel_initializer="he_normal", activation='sigmoid')(lstm2)
         dnn_2 = Dense(2, activation='softmax')(dnn_1)
