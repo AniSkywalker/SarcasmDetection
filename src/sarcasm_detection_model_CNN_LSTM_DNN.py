@@ -290,7 +290,7 @@ class test_model(sarcasm_model):
 
 
 if __name__ == "__main__":
-    basepath = os.getcwd()[:os.getcwd().rfind('/')]
+    basepath = os.path.abspath(os.path.join(os.getcwd(), '..'))
     train_file = basepath + '/resource/train/Train_v1.txt'
     validation_file = basepath + '/resource/dev/Dev_v1.txt'
     test_file = basepath + '/resource/test/Test_v1.txt'
@@ -305,10 +305,10 @@ if __name__ == "__main__":
     word2vec_path = '/home/aghosh/backups/GoogleNews-vectors-negative300.bin'
 
     # uncomment for training
-    tr = train_model(train_file=train_file, validation_file=validation_file, word_file_path=word_file_path,
-                     split_word_path=split_word_path, emoji_file_path=emoji_file_path, model_file=model_file,
-                     vocab_file=vocab_file_path, output_file=output_file, word2vec_path=word2vec_path)
+    # tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
+    #                  vocab_file_path, output_file)
 
-    # t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
-    # t.load_trained_model(weight_file='weights.05__.hdf5')
-    # t.predict(test_file)
+
+    t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
+    t.load_trained_model(weight_file='weights.05__.hdf5')
+    t.predict(test_file)
