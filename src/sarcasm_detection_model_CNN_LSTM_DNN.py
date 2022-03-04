@@ -308,7 +308,6 @@ if __name__ == "__main__":
     # tr = train_model(train_file, validation_file, word_file_path, split_word_path, emoji_file_path, model_file,
     #                  vocab_file_path, output_file)
 
-
     t = test_model(model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
     t.load_trained_model(weight_file='weights.05__.hdf5')
     t.predict(test_file)
