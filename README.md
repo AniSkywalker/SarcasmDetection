@@ -1,6 +1,6 @@
 # SarcamDetection
 Sarcasm detection on tweets using neural network.<br />
-[This repository] perform[s] semantic  modelling  of  sentences  using  neural  networks for the task of sarcasm detection ([Ghosh & Veal, 2016](http://www.aclweb.org/anthology/W16-0425)). 
+[This repository] perform[s] semantic  modelling  of  sentences  using  neural  networks for the task of sarcasm detection ([Ghosh & Veale, 2016](http://www.aclweb.org/anthology/W16-0425)). 
 ## Pre-requisite
 - nltk (TweetTokenizer)
 - Keras
@@ -35,7 +35,7 @@ The supplied input is rated as either **0** meaning _non-sarcastic_ or **1** mea
 ## Training
 If you want to train the model with your own data, you can save your _train_, _development_ and _test_ data into the `/resource/train`, `/resource/dev` and `/resource/test` folders correspondingly.
 
-The system accepts dataset in the tab separated format — as shown below. An example can be found in [`/resource/train/train_v1.txt`](https://github.com/AniSkywalker/SarcasmDetection/tree/master/resource/train). 
+The system accepts dataset in the tab separated format â€” as shown below. An example can be found in [`/resource/train/train_v1.txt`](https://github.com/AniSkywalker/SarcasmDetection/tree/master/resource/train). 
 ```
 id<tab>label<tab>tweet
 ```
